@@ -1,0 +1,24 @@
+ User_Alias     OPERATORS = joe, mike, jude
+ Runas_Alias    OP = root, operator
+ Host_Alias     OFNET = 10.1.2.0/255.255.255.0
+ Cmnd_Alias     PRINTING = /usr/sbin/lpc, /usr/bin/lprm
+
+OPERATORS ALL=ALL
+
+#The users in the OPERATORS group can run any command from any terminal.
+
+linus ALL=(OP) ALL
+
+# The user linus can run any command from any terminal as any user in the OP group (root or operator).
+
+user2 OFNET=(ALL) ALL
+
+# user user2 may run any command from any machine in the OFNET network, as any user.
+
+user3 ALL= PRINTING
+
+# user user3 may run lpc and lprm from any machine.
+
+go2linux ALL=(ALL) ALL
+
+# user go2linux may run any command from any machine acting as any user. (like Ubuntu)
