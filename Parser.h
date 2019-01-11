@@ -14,12 +14,22 @@
 #define PARSER_H
 
 #include "AliasData.h"
+#include "UserData.h"
 #include <vector>
+
+enum class LastElement
+{
+    LINE_EMPTY,
+    LINE_USER,
+    LINE_ALIAS,
+    LINE_COMMENT
+};
 
 class Parser {
 public:
     static Parser* getInstance();
     void ParseLine(std::string line);
+    std::string PrepareToSave();
     
 private:
     Parser();
@@ -35,6 +45,10 @@ private:
     
 private:
     static Parser* mInstance;
+    
+    LastElement mLastParsedType;
+    UserData* mLastUser;
+    AliasData* mLastAlias;
 
 };
 

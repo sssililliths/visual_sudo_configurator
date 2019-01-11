@@ -36,12 +36,15 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/AliasData.o \
+	${OBJECTDIR}/AliasEditWindow.o \
+	${OBJECTDIR}/AliasTabWindowManager.o \
 	${OBJECTDIR}/DataManager.o \
 	${OBJECTDIR}/FileManager.o \
-	${OBJECTDIR}/GroupData.o \
 	${OBJECTDIR}/MainWindow.o \
 	${OBJECTDIR}/Parser.o \
 	${OBJECTDIR}/UserData.o \
+	${OBJECTDIR}/UserEditWindow.o \
+	${OBJECTDIR}/UserTabWindowManager.o \
 	${OBJECTDIR}/main.o
 
 
@@ -49,8 +52,8 @@ OBJECTFILES= \
 CFLAGS=
 
 # CC Compiler Flags
-CCFLAGS=
-CXXFLAGS=
+CCFLAGS=`pkg-config --cflags --libs gtk+-3.0` 
+CXXFLAGS=`pkg-config --cflags --libs gtk+-3.0` 
 
 # Fortran Compiler Flags
 FFLAGS=
@@ -72,42 +75,57 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/visual_sudo_configurator: ${OBJECTFIL
 ${OBJECTDIR}/AliasData.o: AliasData.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/AliasData.o AliasData.cpp
+	$(COMPILE.cc) -O2 -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/AliasData.o AliasData.cpp
+
+${OBJECTDIR}/AliasEditWindow.o: AliasEditWindow.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/AliasEditWindow.o AliasEditWindow.cpp
+
+${OBJECTDIR}/AliasTabWindowManager.o: AliasTabWindowManager.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/AliasTabWindowManager.o AliasTabWindowManager.cpp
 
 ${OBJECTDIR}/DataManager.o: DataManager.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/DataManager.o DataManager.cpp
+	$(COMPILE.cc) -O2 -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/DataManager.o DataManager.cpp
 
 ${OBJECTDIR}/FileManager.o: FileManager.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/FileManager.o FileManager.cpp
-
-${OBJECTDIR}/GroupData.o: GroupData.cpp
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/GroupData.o GroupData.cpp
+	$(COMPILE.cc) -O2 -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/FileManager.o FileManager.cpp
 
 ${OBJECTDIR}/MainWindow.o: MainWindow.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/MainWindow.o MainWindow.cpp
+	$(COMPILE.cc) -O2 -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/MainWindow.o MainWindow.cpp
 
 ${OBJECTDIR}/Parser.o: Parser.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/Parser.o Parser.cpp
+	$(COMPILE.cc) -O2 -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/Parser.o Parser.cpp
 
 ${OBJECTDIR}/UserData.o: UserData.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/UserData.o UserData.cpp
+	$(COMPILE.cc) -O2 -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/UserData.o UserData.cpp
+
+${OBJECTDIR}/UserEditWindow.o: UserEditWindow.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/UserEditWindow.o UserEditWindow.cpp
+
+${OBJECTDIR}/UserTabWindowManager.o: UserTabWindowManager.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/UserTabWindowManager.o UserTabWindowManager.cpp
 
 ${OBJECTDIR}/main.o: main.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
+	$(COMPILE.cc) -O2 -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
 
 # Subprojects
 .build-subprojects:

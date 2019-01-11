@@ -12,10 +12,8 @@
 
 #include <string>
 #include <gtk/gtk.h>
-#include <gtk-2.0/gtk/gtkmenuitem.h> 
 #include "MainWindow.h"
 #include "FileManager.h"
-#include "DataManager.h"
 
 void OnClickOpenMenuItem (GtkMenuItem *menuitem, gpointer user_data)
 {
@@ -23,6 +21,65 @@ void OnClickOpenMenuItem (GtkMenuItem *menuitem, gpointer user_data)
     fileManager->LoadData();
     MainWindow::getInstance()->ShowData();
 }
+
+void OnClickSaveMenuItem (GtkMenuItem *menuitem, gpointer user_data)
+{
+    FileManager* fileManager = FileManager::getInstance();
+    fileManager->SaveData();
+}
+
+
+void OnClickBtnRemoveAlias(GtkWidget *btn, gpointer user_data)
+{
+    GtkTreeIter iter;
+    GtkTreeSelection *selection;
+    GtkTreeModel* model;
+    
+    selection = gtk_tree_view_get_selection(static_cast<GtkTreeView*>(user_data));
+    gboolean isSelected = gtk_tree_selection_get_selected (selection,
+                                 &model,
+                                 &iter);
+    
+    if (isSelected)
+    {
+        gchar* data;
+        gtk_tree_model_get (model, &iter,
+                           AliasCols::COL_NAME, &data,
+                           -1);
+
+        std::stringstream ss;
+        ss << data;
+        DataManager::getInstance()->RemoveAlias(ss.str());
+        MainWindow::getInstance()->ShowData();
+    }
+}
+
+
+void OnClickBtnRemoveUser(GtkWidget *btn, gpointer user_data)
+{
+    GtkTreeIter iter;
+    GtkTreeSelection *selection;
+    GtkTreeModel* model;
+    
+    selection = gtk_tree_view_get_selection(static_cast<GtkTreeView*>(user_data));
+    gboolean isSelected = gtk_tree_selection_get_selected (selection,
+                                 &model,
+                                 &iter);
+    
+    if (isSelected)
+    {
+        gchar* data;
+        gtk_tree_model_get (model, &iter,
+                           UserCols::COL_NAME, &data,
+                           -1);
+
+        std::stringstream ss;
+        ss << data;
+        DataManager::getInstance()->RemoveUser(ss.str());
+        MainWindow::getInstance()->ShowData();
+    }
+}
+
 
 MainWindow* MainWindow::mInstance = 0;
 
@@ -39,6 +96,10 @@ MainWindow::MainWindow()
       g_clear_error (&error);
       return;
     }
+    
+    mWindow   = GTK_WIDGET(gtk_builder_get_object(mBuilder, "wndAppWindow"));
+    GtkWidget* notebook = GTK_WIDGET(gtk_builder_get_object(mBuilder, "ntbDataCategories"));
+    PrepareTabs(notebook);
 }
 
 MainWindow::~MainWindow()
@@ -57,65 +118,39 @@ MainWindow* MainWindow::getInstance()
 
 void MainWindow::ShowWindow()
 {    
-    GtkWidget* window   = GTK_WIDGET(gtk_builder_get_object(mBuilder, "wndAppWindow"));
-    GtkWidget* notebook = GTK_WIDGET(gtk_builder_get_object(mBuilder, "ntbDataCategories"));
     GtkWidget* menuOpen  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "imiOpen"));
-    
-    PrepareTabs(notebook);
-    
-    g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
+    GtkWidget* menuSave  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "imiSave"));
+    GtkWidget* treeViewAlias   = GTK_WIDGET(gtk_builder_get_object(mBuilder, "trvAliasData"));
+    GtkWidget* treeViewUser   = GTK_WIDGET(gtk_builder_get_object(mBuilder, "trvUserData"));
+    GtkWidget* buttonAliasAdd  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnAliasAdd"));
+    GtkWidget* buttonAliasEdit  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnAliasModify"));
+    GtkWidget* buttonUserAdd  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnUserAdd"));
+    GtkWidget* buttonUserEdit  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnUserModify"));
+    GtkWidget* buttonAliasRemove  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnAliasRemove"));
+    GtkWidget* buttonUserRemove  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnUserRemove"));
+        
+    g_signal_connect (mWindow, "destroy", G_CALLBACK (gtk_main_quit), NULL);
     g_signal_connect (menuOpen, "activate", G_CALLBACK (OnClickOpenMenuItem), NULL);
-
-    gtk_widget_show( window );
+    g_signal_connect (menuSave, "activate", G_CALLBACK (OnClickSaveMenuItem), NULL);
+    g_signal_connect (buttonAliasAdd, "clicked", G_CALLBACK (OnClickBtnAddAlias), NULL);
+    g_signal_connect (buttonUserAdd, "clicked", G_CALLBACK (OnClickBtnAddUser), NULL);
+    g_signal_connect (buttonAliasEdit, "clicked", G_CALLBACK (OnClickBtnModifyAlias), treeViewAlias);
+    g_signal_connect (buttonUserEdit, "clicked", G_CALLBACK (OnClickBtnModifyUser), treeViewUser);
+    g_signal_connect (buttonAliasRemove, "clicked", G_CALLBACK (OnClickBtnRemoveAlias), treeViewAlias);
+    g_signal_connect (buttonUserRemove, "clicked", G_CALLBACK (OnClickBtnRemoveUser), treeViewUser);
+    
+    gtk_widget_show( mWindow );
     gtk_main();
 }
 
 void MainWindow::PrepareTabs(GtkWidget* notebook)
 {
-    GtkTreeIter iter;
-    GtkWidget* treeView   = GTK_WIDGET(gtk_builder_get_object(mBuilder, "trvAliasData"));
-    GtkCellRenderer* renderer = gtk_cell_renderer_text_new ();
-    GtkTreeViewColumn* columnTypes = gtk_tree_view_column_new_with_attributes(
-                                                                        "Type", // column title
-                                                                        renderer, // GtkCellRenderer
-                                                                        NULL); // end of list    
-    GtkTreeViewColumn* columnNames = gtk_tree_view_column_new_with_attributes(
-                                                                        "Name", // column title
-                                                                        renderer, // GtkCellRenderer
-                                                                        NULL); // end of list    
-    GtkTreeViewColumn* columnValues = gtk_tree_view_column_new_with_attributes(
-                                                                        "Value", // column title
-                                                                        renderer, // GtkCellRenderer
-                                                                        NULL); // end of list    
-    GtkListStore* store = gtk_list_store_new(
-                                            3, 
-                                            G_TYPE_STRING, 
-                                            G_TYPE_STRING, 
-                                            G_TYPE_STRING);
-    
-    gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), columnTypes);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), columnNames);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), columnValues);
-    gtk_tree_view_set_model(GTK_TREE_VIEW(treeView), GTK_TREE_MODEL(store));
+    PrepareAliasTab(notebook);
+    PrepareUserTab(notebook);
 }
 
 void MainWindow::ShowData()
-{
+{    
     PrepareAliases();
-}
-
-void MainWindow::PrepareAliases()
-{
-    GtkWidget* treeView   = GTK_WIDGET(gtk_builder_get_object(mBuilder, "trvAliasData"));
-    GtkTreeIter iter;
-    GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(treeView)));
-    
-    for (AliasData* elem : DataManager::getInstance()->GetAliasesByValue(""))
-    {
-        const gchar *type = elem->GetTypeString().c_str();
-        const gchar *name = elem->GetName().c_str();
-        const gchar *val = elem->GetValuesString().c_str();
-        gtk_list_store_append(store, &iter);
-        gtk_list_store_set(store, &iter, 0, type,/* 1, name, 2, val,*/ -1);
-    }
+    PrepareUsers();
 }

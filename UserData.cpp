@@ -12,9 +12,37 @@
 
 #include "UserData.h"
 
-UserData::UserData()
+UserData::UserData(
+    std::string name, 
+    std::string location, 
+    std::string runas,
+    std::list<std::string> cmds) :
+        mName(name),
+        mTerminals(location),
+        mAs(runas),
+        mCommands(cmds),
+        mGroup(false),
+        mSystemGroup(false)
+        
 {
 }
+
+std::string UserData::GetCmdsString()
+{    
+    std::stringstream ss;
+    for (std::string elem : mCommands)
+    {
+        ss << elem;
+        
+        if (mCommands.back() != elem)
+        {
+            ss << ", ";
+        }
+    }
+    std::string result = ss.str();
+    return result;
+}
+
 
 UserData::~UserData()
 {

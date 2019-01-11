@@ -5,12 +5,13 @@
                    displayName="Header Files"
                    projectFiles="true">
       <itemPath>AliasData.h</itemPath>
+      <itemPath>AliasEditWindow.h</itemPath>
       <itemPath>DataManager.h</itemPath>
       <itemPath>FileManager.h</itemPath>
-      <itemPath>GroupData.h</itemPath>
       <itemPath>MainWindow.h</itemPath>
       <itemPath>Parser.h</itemPath>
       <itemPath>UserData.h</itemPath>
+      <itemPath>UserEditWindow.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -20,12 +21,15 @@
                    displayName="Source Files"
                    projectFiles="true">
       <itemPath>AliasData.cpp</itemPath>
+      <itemPath>AliasEditWindow.cpp</itemPath>
+      <itemPath>AliasTabWindowManager.cpp</itemPath>
       <itemPath>DataManager.cpp</itemPath>
       <itemPath>FileManager.cpp</itemPath>
-      <itemPath>GroupData.cpp</itemPath>
       <itemPath>MainWindow.cpp</itemPath>
       <itemPath>Parser.cpp</itemPath>
       <itemPath>UserData.cpp</itemPath>
+      <itemPath>UserEditWindow.cpp</itemPath>
+      <itemPath>UserTabWindowManager.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
@@ -64,6 +68,12 @@
       </item>
       <item path="AliasData.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="AliasEditWindow.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="AliasEditWindow.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="AliasTabWindowManager.cpp" ex="false" tool="1" flavor2="0">
+      </item>
       <item path="DataManager.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="DataManager.h" ex="false" tool="3" flavor2="0">
@@ -71,10 +81,6 @@
       <item path="FileManager.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="FileManager.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="GroupData.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="GroupData.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="MainWindow.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -87,6 +93,12 @@
       <item path="UserData.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="UserData.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="UserEditWindow.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="UserEditWindow.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="UserTabWindowManager.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -103,6 +115,8 @@
         </cTool>
         <ccTool>
           <developmentMode>5</developmentMode>
+          <standard>11</standard>
+          <commandLine>`pkg-config --cflags --libs gtk+-3.0`</commandLine>
         </ccTool>
         <fortranCompilerTool>
           <developmentMode>5</developmentMode>
@@ -115,6 +129,12 @@
       </item>
       <item path="AliasData.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="AliasEditWindow.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="AliasEditWindow.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="AliasTabWindowManager.cpp" ex="false" tool="1" flavor2="0">
+      </item>
       <item path="DataManager.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="DataManager.h" ex="false" tool="3" flavor2="0">
@@ -122,10 +142,6 @@
       <item path="FileManager.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="FileManager.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="GroupData.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="GroupData.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="MainWindow.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -138,6 +154,12 @@
       <item path="UserData.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="UserData.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="UserEditWindow.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="UserEditWindow.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="UserTabWindowManager.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>

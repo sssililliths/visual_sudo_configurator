@@ -14,7 +14,6 @@
 #define DATAMANAGER_H
 
 #include "AliasData.h"
-#include "GroupData.h"
 #include "UserData.h"
 
 
@@ -28,31 +27,30 @@ public:
         std::list<std::string> values);    
     AliasData* GetAlias(std::string name);
     std::list<AliasData*> GetAliasesByValue(std::string value);
-    std::list<AliasData*> GetAliasesByType(AliasType value);
-    void ModifyAlias(std::string name);
+    std::list<AliasData*> GetAliases();
+    void ModifyAlias(
+        std::string name, 
+        AliasType type, 
+        std::list<std::string> values);
     void RemoveAlias(std::string name);
+    void SetAliasComment(std::string name, std::string comment);
     
     void AddUser(
         std::string name, 
         std::string location, 
         std::string runas, 
-        std::list<std::string> cmds);
+        std::list<std::string> cmds,
+        bool isGroup,
+        bool isSystemGroup = false);
     UserData* GetUser(std::string name);
-    std::list<UserData*> GetUsersByGroup(std::string name);
-    void ModifyUser(std::string name);
-    void RemoveUser(std::string name);
-    
-    void AddGroup(
+    std::list<UserData*> GetUsers();
+    void ModifyUser(
         std::string name, 
         std::string location, 
         std::string runas, 
-        std::list<std::string> cmds,
-        bool isSystemGroup);
-    GroupData* GetGroupByName(std::string name);
-    std::list<GroupData*> GetGroupsByUser(std::string name);
-    std::list<GroupData*> GetGroupsByAlias(std::string name);
-    void ModifyGroup(std::string name);
-    void RemoveGroup(std::string name);
+        std::list<std::string> cmds);
+    void RemoveUser(std::string name);
+    void SetUserComment(std::string name, std::string comment);
     
 private:    
     DataManager();
@@ -62,7 +60,6 @@ private:
     static DataManager* mInstance;
     
     std::list<AliasData*> mAliases;
-    std::list<GroupData*> mGroups;
     std::list<UserData*> mUsers;
 };
 

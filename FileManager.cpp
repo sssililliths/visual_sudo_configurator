@@ -12,6 +12,7 @@
 
 #include "FileManager.h"
 #include "Parser.h"
+#include "MainWindow.h"
 #include <sstream>
 
 FileManager* FileManager::mInstance = 0;
@@ -37,29 +38,77 @@ FileManager* FileManager::getInstance()
 
 void FileManager::LoadData()
 {
-    std::fstream fs;
+    GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
+    GtkWidget *dialog = gtk_file_chooser_dialog_new ("Open File",
+                                      GTK_WINDOW(MainWindow::getInstance()->GetWindow()),
+                                      action,
+                                      "_Cancel",
+                                      GTK_RESPONSE_CANCEL,
+                                      "_Open",
+                                      GTK_RESPONSE_OK,
+                                      NULL);
     
-    fs.open ("testSudoersFile", std::fstream::in);
-    if (fs.good())
-    {
-        std::string tmp;
-        if (!mFileData.empty())
-        {
-            mFileData.clear();
-        }
+    if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK)
+    {        
+        GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
+        std::fstream fs;
+        fs.open (gtk_file_chooser_get_filename (chooser), std::fstream::in);
         
-        while (!fs.eof())
+        if (fs.good())
         {
-            getline(fs, tmp);
-            mFileData.append(tmp);
-            Parser::getInstance()->ParseLine(tmp);
-        }
-        fs.close();
-    }
-    else
-    {
-        //todo: error opening file
-    }
+            std::string tmp;
+            if (!mFileData.empty())
+            {
+                mFileData.clear();
+            }
 
+            while (!fs.eof())
+            {
+                getline(fs, tmp);
+                mFileData.append(tmp);
+                Parser::getInstance()->ParseLine(tmp);
+            }
+            fs.close();
+        }
+        else
+        {
+            //todo: error opening file
+        }
+    }
+    gtk_widget_destroy (dialog);
+}
+
+
+void FileManager::SaveData()
+{
+    GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_SAVE;
+    GtkWidget *dialog = gtk_file_chooser_dialog_new ("Save File",
+                                      GTK_WINDOW(MainWindow::getInstance()->GetWindow()),
+                                      action,
+                                      "_Cancel",
+                                      GTK_RESPONSE_CANCEL,
+                                      "_Save",
+                                      GTK_RESPONSE_OK,
+                                      NULL);
+    
+    
+    if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK)
+    {        
+        GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
+        std::fstream fs;
+
+        fs.open (gtk_file_chooser_get_filename (chooser), std::fstream::out);
+        if (fs.good())
+        {
+            fs << Parser::getInstance()->PrepareToSave();
+            
+            fs.close();
+        }
+        else
+        {
+            //todo: error opening file
+        }
+    }
+    gtk_widget_destroy (dialog);
 }
 

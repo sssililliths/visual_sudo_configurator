@@ -24,6 +24,7 @@ private:
 public:
     static FileManager* getInstance();
     void LoadData();
+    void SaveData();
     void ParseFile();
     
 private:

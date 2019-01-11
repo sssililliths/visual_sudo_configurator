@@ -39,9 +39,11 @@ std::string AliasData::GetValuesString()
             ss << ", ";
         }
     }
-    
-    return ss.str();
+    std::string result = ss.str();
+    return result;
 }
+
+
 std::string AliasData::GetTypeString()
 {
     std::stringstream ss;
@@ -58,6 +60,29 @@ std::string AliasData::GetTypeString()
         break;
     case AliasType::CMDS_ALIAS:
         ss << "Cmnd";
+        break;
+    }
+    
+    return ss.str();
+}
+
+
+std::string AliasData::GetTypeToFile()
+{
+    std::stringstream ss;
+    switch(mType)
+    {
+    case AliasType::USER_ALIAS:
+        ss << "User_Alias";
+        break;
+    case AliasType::HOST_ALIAS:
+        ss << "Host_Alias";
+        break;
+    case AliasType::RUNAS_ALIAS:
+        ss << "Runas_Alias";
+        break;
+    case AliasType::CMDS_ALIAS:
+        ss << "Cmds_Alias";
         break;
     }
     

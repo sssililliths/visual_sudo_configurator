@@ -63,79 +63,134 @@ DataManager* DataManager::getInstance()
         return mAliases;
     }
     
-    std::list<AliasData*> DataManager::GetAliasesByType(AliasType value)
+    std::list<AliasData*> DataManager::GetAliases()
     {
-        std::list<AliasData*>  typeAliases = {};
-        for (AliasData* elem : mAliases)
-        {
-            if (elem->GetType() == value)
-            {
-                typeAliases.push_back(elem);
-            }
-        }
-        
-        return typeAliases;
+        return mAliases;
     }
     
-    void DataManager::ModifyAlias(std::string name)
-    {}
+    void DataManager::ModifyAlias(
+        std::string name, 
+        AliasType type, 
+        std::list<std::string> values)
+    {
+        for (AliasData* elem : mAliases)
+        {
+            if (elem->GetName() == name)
+            {
+                elem->SetType(type);
+                elem->SetValues(values);
+                return;
+            }
+        }
+    }
+    
+    void DataManager::SetAliasComment(std::string name, std::string comment)
+    {
+        for (AliasData* elem : mAliases)
+        {
+            if (elem->GetName() == name)
+            {
+                elem->SetComment(comment);
+                return;
+            }
+        }
+    }
     
     void DataManager::RemoveAlias(std::string name)
-    {}
+    {
+        for (AliasData* elem : mAliases)
+        {
+            if (elem->GetName() == name)
+            {
+                mAliases.remove(elem);
+                return;
+            }
+        }
+    }
     
     void DataManager::AddUser(
         std::string name, 
         std::string location, 
         std::string runas, 
-        std::list<std::string> cmds)
-    {}
+        std::list<std::string> cmds,
+        bool isGroup,
+        bool isSystemGroup)
+    {
+        UserData* newUser = new UserData(
+                                        name, 
+                                        location, 
+                                        runas,
+                                        cmds);
+        if (isSystemGroup)
+        {
+            newUser->SetAsSystemGroup();
+        }
+        else if (isGroup)
+        {
+            newUser->SetAsGroup();
+        }
+        
+        mUsers.push_back(newUser);
+    }
     
     UserData* DataManager::GetUser(std::string name)
     {
-        // todo find user by name and return it
+        for (UserData* elem : mUsers)
+        {
+            if (elem->GetName() == name)
+            {
+                return elem;
+            }
+        }
+        
         return NULL;
     }
     
-    std::list<UserData*> DataManager::GetUsersByGroup(std::string name)
+    std::list<UserData*> DataManager::GetUsers()
     {
-        // todo find users by group and return it
         return mUsers;
     }
+
     
-    void DataManager::ModifyUser(std::string name)
-    {}
-    
-    void DataManager::RemoveUser(std::string name)
-    {}
-    
-    void DataManager::AddGroup(
+    void DataManager::ModifyUser(
         std::string name, 
         std::string location, 
         std::string runas, 
-        std::list<std::string> cmds,
-        bool isSystemGroup)
-    {}
-    
-    GroupData* DataManager::GetGroupByName(std::string name)
-    {
-        // todo find group by name and return it
-        return NULL;
+        std::list<std::string> cmds)
+    {        
+        for (UserData* elem : mUsers)
+        {
+            if (elem->GetName() == name)
+            {
+                elem->SetLocation(location);
+                elem->SetRunas(runas);
+                elem->SetCmdsString(cmds);
+                return;
+            }
+        }
     }
     
-    std::list<GroupData*> DataManager::GetGroupsByUser(std::string name)
+    void DataManager::RemoveUser(std::string name)
     {
-        // todo find groups by user and return it
-        return mGroups;
+        for (UserData* elem : mUsers)
+        {
+            if (elem->GetName() == name)
+            {
+                mUsers.remove(elem);
+                return;
+            }
+        }
+    }            
+    
+    void DataManager::SetUserComment(std::string name, std::string comment)
+    {
+        for (UserData* elem : mUsers)
+        {
+            if (elem->GetName() == name)
+            {
+                elem->SetComment(comment);
+                return;
+            }
+        }
     }
     
-    std::list<GroupData*> DataManager::GetGroupsByAlias(std::string name)
-    {
-        // todo find groups by alias ( alias != name ? ) and return it
-        return mGroups;
-    }
-    
-    void DataManager::ModifyGroup(std::string name)
-    {}
-    
-    void DataManager::RemoveGroup(std::string name)
-    {}

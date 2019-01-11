@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=Visual sudo configurator
+PROJECTNAME=visual_sudo_configurator
 
 # Active Configuration
 DEFAULTCONF=Debug

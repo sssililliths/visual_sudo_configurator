@@ -36,12 +36,15 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/AliasData.o \
+	${OBJECTDIR}/AliasEditWindow.o \
+	${OBJECTDIR}/AliasTabWindowManager.o \
 	${OBJECTDIR}/DataManager.o \
 	${OBJECTDIR}/FileManager.o \
-	${OBJECTDIR}/GroupData.o \
 	${OBJECTDIR}/MainWindow.o \
 	${OBJECTDIR}/Parser.o \
 	${OBJECTDIR}/UserData.o \
+	${OBJECTDIR}/UserEditWindow.o \
+	${OBJECTDIR}/UserTabWindowManager.o \
 	${OBJECTDIR}/main.o
 
 
@@ -74,6 +77,16 @@ ${OBJECTDIR}/AliasData.o: AliasData.cpp
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/AliasData.o AliasData.cpp
 
+${OBJECTDIR}/AliasEditWindow.o: AliasEditWindow.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/AliasEditWindow.o AliasEditWindow.cpp
+
+${OBJECTDIR}/AliasTabWindowManager.o: AliasTabWindowManager.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/AliasTabWindowManager.o AliasTabWindowManager.cpp
+
 ${OBJECTDIR}/DataManager.o: DataManager.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
@@ -83,11 +96,6 @@ ${OBJECTDIR}/FileManager.o: FileManager.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/FileManager.o FileManager.cpp
-
-${OBJECTDIR}/GroupData.o: GroupData.cpp
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} "$@.d"
-	$(COMPILE.cc) -g -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/GroupData.o GroupData.cpp
 
 ${OBJECTDIR}/MainWindow.o: MainWindow.cpp
 	${MKDIR} -p ${OBJECTDIR}
@@ -103,6 +111,16 @@ ${OBJECTDIR}/UserData.o: UserData.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/UserData.o UserData.cpp
+
+${OBJECTDIR}/UserEditWindow.o: UserEditWindow.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/UserEditWindow.o UserEditWindow.cpp
+
+${OBJECTDIR}/UserTabWindowManager.o: UserTabWindowManager.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/UserTabWindowManager.o UserTabWindowManager.cpp
 
 ${OBJECTDIR}/main.o: main.cpp
 	${MKDIR} -p ${OBJECTDIR}

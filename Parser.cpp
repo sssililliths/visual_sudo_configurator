@@ -41,19 +41,39 @@ void Parser::ParseLine(std::string line)
     if(ToLower(lineData[0]).find("_alias") != std::string::npos) // aliases
     {
         ParseAlias(lineData);
+        mLastParsedType = LastElement::LINE_ALIAS;
     } 
     else if (lineData[0][0] == '%' || 
             (dm->GetAlias(lineData[0]) != NULL && dm->GetAlias(lineData[0])->GetType() == AliasType::USER_ALIAS)) // groups
     {
         ParseUser<true>(lineData);
+        mLastParsedType = LastElement::LINE_USER;
     }
     else if (lineData[0][0] == '#')
     {
-        // comment, I don't know, what to do with it
+        std::stringstream ss;
+        for (std::string word : lineData)
+            ss << word << " ";
+        std::string tmp = ss.str();
+        tmp = tmp.substr (1,tmp.length()-1);
+        if (tmp[0] == ' ')
+        {
+            tmp = tmp.substr (1,tmp.length()-1);
+        }
+        
+        if (mLastParsedType == LastElement::LINE_ALIAS)
+        {
+            mLastAlias->SetComment(tmp);
+        }
+        else
+        {
+            mLastUser->SetComment(tmp);
+        }
     }
     else
     {
         ParseUser<false>(lineData);
+        mLastParsedType = LastElement::LINE_USER;
     }    
 }
 
@@ -157,14 +177,8 @@ void Parser::ParseUser(std::vector<std::string> userData)
         cmds.push_back(tmp);
     }
     
-    if(isGroup)
-    {
-        DataManager::getInstance()->AddGroup(name, location, runAs, cmds, isSystemGroup);
-    }
-    else
-    {
-        DataManager::getInstance()->AddUser(name, location, runAs, cmds);
-    }
+    DataManager::getInstance()->AddUser(name, location, runAs, cmds, isGroup, isSystemGroup);
+    mLastUser = DataManager::getInstance()->GetUser(name);
 }
 
 void Parser::ParseAlias(std::vector<std::string> aliasData)
@@ -184,7 +198,7 @@ void Parser::ParseAlias(std::vector<std::string> aliasData)
     }
     
     DataManager::getInstance()->AddAlias(aliasName, aliasType, aliasValues);
-    
+    mLastAlias = DataManager::getInstance()->GetAlias(aliasName);
 }
 
 AliasType Parser::GetAliasType(std::string str)
@@ -246,3 +260,51 @@ std::vector<std::string> Parser::Split(std::string str, std::string delim)
     
     return result;
 }
+
+
+    std::string Parser::PrepareToSave()
+    {
+        std::stringstream ss;
+        
+        for (AliasData* alias : DataManager::getInstance()->GetAliases())
+        {
+            ss << alias->GetTypeToFile() << " "
+               << alias->GetName() << " = "
+               << alias->GetValuesString() << std::endl;
+            
+            if (!alias->GetComment().empty())
+            {
+                ss << "# " << alias->GetComment() << std::endl
+                        << std::endl;
+            }
+        }
+        
+        ss << std::endl << std::endl;
+        
+        for (UserData* user : DataManager::getInstance()->GetUsers())
+        {
+            ss << user->GetName() << " "
+               << user->GetLocation() << "=";
+            
+            if(!user->GetRunas().empty())
+            {
+                ss << "(" << user->GetRunas() << ") ";
+            }
+            else
+            {
+                ss << " ";
+            }
+            
+            ss << user->GetCmdsString() << std::endl;
+            ss << std::endl; 
+            
+            if (!user->GetComment().empty())
+            {
+                ss << "# " << user->GetComment() << std::endl 
+                        << std::endl;
+            }
+        }
+        
+        return ss.str();
+    }
+    
