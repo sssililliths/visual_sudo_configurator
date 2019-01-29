@@ -39,6 +39,9 @@ OBJECTFILES= \
 	${OBJECTDIR}/AliasEditWindow.o \
 	${OBJECTDIR}/AliasTabWindowManager.o \
 	${OBJECTDIR}/DataManager.o \
+	${OBJECTDIR}/DefaultsData.o \
+	${OBJECTDIR}/DefaultsEditWindow.o \
+	${OBJECTDIR}/DefaultsTabWindowManager.o \
 	${OBJECTDIR}/FileManager.o \
 	${OBJECTDIR}/MainWindow.o \
 	${OBJECTDIR}/Parser.o \
@@ -70,7 +73,7 @@ LDLIBSOPTIONS=
 
 ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/visual_sudo_configurator: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
-	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/visual_sudo_configurator ${OBJECTFILES} ${LDLIBSOPTIONS}
+	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/visual_sudo_configurator ${OBJECTFILES} ${LDLIBSOPTIONS} `pkg-config --cflags --libs gtk+-3.0`
 
 ${OBJECTDIR}/AliasData.o: AliasData.cpp
 	${MKDIR} -p ${OBJECTDIR}
@@ -91,6 +94,21 @@ ${OBJECTDIR}/DataManager.o: DataManager.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/DataManager.o DataManager.cpp
+
+${OBJECTDIR}/DefaultsData.o: DefaultsData.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/DefaultsData.o DefaultsData.cpp
+
+${OBJECTDIR}/DefaultsEditWindow.o: DefaultsEditWindow.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/DefaultsEditWindow.o DefaultsEditWindow.cpp
+
+${OBJECTDIR}/DefaultsTabWindowManager.o: DefaultsTabWindowManager.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/DefaultsTabWindowManager.o DefaultsTabWindowManager.cpp
 
 ${OBJECTDIR}/FileManager.o: FileManager.cpp
 	${MKDIR} -p ${OBJECTDIR}

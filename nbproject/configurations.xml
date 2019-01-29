@@ -7,6 +7,9 @@
       <itemPath>AliasData.h</itemPath>
       <itemPath>AliasEditWindow.h</itemPath>
       <itemPath>DataManager.h</itemPath>
+      <itemPath>DefaultsData.h</itemPath>
+      <itemPath>DefaultsEditWindow.h</itemPath>
+      <itemPath>DefaultsParams.h</itemPath>
       <itemPath>FileManager.h</itemPath>
       <itemPath>MainWindow.h</itemPath>
       <itemPath>Parser.h</itemPath>
@@ -16,6 +19,10 @@
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
                    projectFiles="true">
+      <itemPath>UserWindow.glade</itemPath>
+      <itemPath>aliasWindow.glade</itemPath>
+      <itemPath>defaultsWindow.glade</itemPath>
+      <itemPath>mainWindow</itemPath>
     </logicalFolder>
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
@@ -24,6 +31,9 @@
       <itemPath>AliasEditWindow.cpp</itemPath>
       <itemPath>AliasTabWindowManager.cpp</itemPath>
       <itemPath>DataManager.cpp</itemPath>
+      <itemPath>DefaultsData.cpp</itemPath>
+      <itemPath>DefaultsEditWindow.cpp</itemPath>
+      <itemPath>DefaultsTabWindowManager.cpp</itemPath>
       <itemPath>FileManager.cpp</itemPath>
       <itemPath>MainWindow.cpp</itemPath>
       <itemPath>Parser.cpp</itemPath>
@@ -63,6 +73,9 @@
           <commandlineTool>g++</commandlineTool>
           <commandLine>`pkg-config --cflags --libs gtk+-3.0`</commandLine>
         </ccTool>
+        <linkerTool>
+          <commandLine>`pkg-config --cflags --libs gtk+-3.0`</commandLine>
+        </linkerTool>
       </compileType>
       <item path="AliasData.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -77,6 +90,18 @@
       <item path="DataManager.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="DataManager.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="DefaultsData.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="DefaultsData.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="DefaultsEditWindow.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="DefaultsEditWindow.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="DefaultsParams.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="DefaultsTabWindowManager.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="FileManager.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -100,7 +125,15 @@
       </item>
       <item path="UserTabWindowManager.cpp" ex="false" tool="1" flavor2="0">
       </item>
+      <item path="UserWindow.glade" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="aliasWindow.glade" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="defaultsWindow.glade" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="mainWindow" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
     <conf name="Release" type="1">
@@ -139,6 +172,18 @@
       </item>
       <item path="DataManager.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="DefaultsData.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="DefaultsData.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="DefaultsEditWindow.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="DefaultsEditWindow.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="DefaultsParams.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="DefaultsTabWindowManager.cpp" ex="false" tool="1" flavor2="0">
+      </item>
       <item path="FileManager.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="FileManager.h" ex="false" tool="3" flavor2="0">
@@ -161,7 +206,15 @@
       </item>
       <item path="UserTabWindowManager.cpp" ex="false" tool="1" flavor2="0">
       </item>
+      <item path="UserWindow.glade" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="aliasWindow.glade" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="defaultsWindow.glade" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="mainWindow" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
   </confs>

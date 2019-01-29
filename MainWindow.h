@@ -28,10 +28,10 @@ private:
     void PrepareTabs(GtkWidget* notebook);
     void PrepareAliasTab(GtkWidget* notebook);
     void PrepareUserTab(GtkWidget* notebook);
-    void PrepareGroupTab(GtkWidget* notebook);
+    void PrepareDefaultsTab(GtkWidget* notebook);
     void PrepareAliases();
     void PrepareUsers();
-    void PrepareGroups();
+    void PrepareDefaults();
     std::string GetTreeviewData(GtkTreeModel* model, int col);
 
 public:
@@ -53,5 +53,5 @@ void OnClickBtnAddAlias(GtkWidget *btn, gpointer user_data);
 void OnClickBtnModifyAlias(GtkWidget *btn, gpointer user_data);
 void OnClickBtnAddUser(GtkWidget *btn, gpointer user_data);
 void OnClickBtnModifyUser(GtkWidget *btn, gpointer user_data);
-void OnClickBtnAddGroup(GtkWidget *btn, gpointer user_data);
-void OnClickBtnModifyGroup(GtkWidget *btn, gpointer user_data);
+void OnClickBtnAddDefaults(GtkWidget *btn, gpointer user_data);
+void OnClickBtnModifyDefaults(GtkWidget *btn, gpointer user_data);

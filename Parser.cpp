@@ -13,12 +13,15 @@
 
 #include "Parser.h"
 #include "DataManager.h"
+#include "DefaultsParams.h"
 #include <algorithm> 
 #include <sstream>
 
 Parser* Parser::mInstance = 0;
 
-Parser::Parser() 
+Parser::Parser() :
+    mLastUser(NULL),
+    mLastAlias(NULL)
 {}
 
 Parser* Parser::getInstance()
@@ -49,6 +52,10 @@ void Parser::ParseLine(std::string line)
         ParseUser<true>(lineData);
         mLastParsedType = LastElement::LINE_USER;
     }
+    else if (ToLower(lineData[0]).find("defaults") == 0)
+    {
+        ParseDefaults(lineData);
+    }
     else if (lineData[0][0] == '#')
     {
         std::stringstream ss;
@@ -63,11 +70,13 @@ void Parser::ParseLine(std::string line)
         
         if (mLastParsedType == LastElement::LINE_ALIAS)
         {
-            mLastAlias->SetComment(tmp);
+            if (mLastAlias)
+                mLastAlias->SetComment(tmp);
         }
         else
         {
-            mLastUser->SetComment(tmp);
+            if (mLastUser)
+                mLastUser->SetComment(tmp);
         }
     }
     else
@@ -76,6 +85,84 @@ void Parser::ParseLine(std::string line)
         mLastParsedType = LastElement::LINE_USER;
     }    
 }
+
+
+void Parser::ParseDefaults(std::vector<std::string> defaultData)
+{
+    DefaultsType type = DefaultsType::ALL_DEFAULTS;
+    int currElem = 1;
+    std::string param;
+    std::string values;
+    std::string owner;
+    
+    // check type
+    if(ToLower(defaultData[0]) != "defaults")
+    {
+        unsigned len = std::string("defaults").size();
+        type = GetDefaultsType(defaultData[0].substr(len, 1));
+        owner = defaultData[0].substr(len + 1, std::string::npos);
+    }
+    
+    /*
+    * Defaults param
+    *    [0]    [1]
+    * Defaults param = value
+    *    [0]    [1] [2]   [3]
+    * Defaults param= value
+    *    [0]    [1]      [2]
+    * Defaults param =value
+    *    [0]    [1]     [2]
+    * Defaults param=value
+    *    [0]        [1]
+    *
+    * Type is all
+    */    
+    
+    if (defaultData[currElem].find("=") != std::string::npos)
+    {
+        if(defaultData[currElem].back() == '=')
+        {
+            // defaults param= ..., just remove =
+            param = defaultData[currElem].substr(0, defaultData[currElem].size() - 1);
+            currElem++;
+            values = defaultData[currElem];
+        }
+        else
+        {
+            // Default param=val
+            std::vector<std::string> tmp = Split(defaultData[currElem], "=");
+            param = tmp[0];
+            values = tmp[1];
+        }
+    }    
+    else if(defaultData.size() == 2)
+    {
+        // Default param
+        param = defaultData[currElem];
+    }
+    else if(defaultData[currElem] == "=")
+    {
+        // Defaults param = value
+        param = defaultData[currElem];
+        values = defaultData[++currElem];
+    }
+    else
+    {
+         // Defaults param =value_list
+        param = defaultData[currElem];
+        currElem++;
+        values = defaultData[currElem].substr(1, defaultData[currElem].size());
+    }
+    currElem++;
+    
+    for(int i = currElem; i < defaultData.size(); i++)
+    {
+        values += " " + defaultData[i];
+    }
+    
+    DataManager::getInstance()->AddDefaults(type, owner, param, values);
+}
+
 
 template<bool isGroup>
 void Parser::ParseUser(std::vector<std::string> userData)
@@ -181,6 +268,7 @@ void Parser::ParseUser(std::vector<std::string> userData)
     mLastUser = DataManager::getInstance()->GetUser(name);
 }
 
+
 void Parser::ParseAlias(std::vector<std::string> aliasData)
 {
     AliasType aliasType = GetAliasType(aliasData[0]);
@@ -200,6 +288,7 @@ void Parser::ParseAlias(std::vector<std::string> aliasData)
     DataManager::getInstance()->AddAlias(aliasName, aliasType, aliasValues);
     mLastAlias = DataManager::getInstance()->GetAlias(aliasName);
 }
+
 
 AliasType Parser::GetAliasType(std::string str)
 {
@@ -222,6 +311,29 @@ AliasType Parser::GetAliasType(std::string str)
     }
 }
 
+
+DefaultsType Parser::GetDefaultsType(std::string str)
+{
+    std::string type = ToLower(str);
+    if(type == ":")
+    {
+        return DefaultsType::USER_DEFAULTS;
+    }
+    else if(type == ">")
+    {
+        return DefaultsType::RUNAS_DEFAULTS;
+    }
+    else if(type == "@")
+    {
+        return DefaultsType::HOST_DEFAULTS;
+    }
+    else //if(ToLower(str) == "!")
+    {
+        return DefaultsType::CMDS_DEFAULTS;
+    }
+}
+
+
 std::string Parser::ToLower(std::string str)
 {
     std::stringstream ss;
@@ -239,6 +351,7 @@ std::string Parser::ToLower(std::string str)
     }
     return ss.str();
 }
+
 
 std::vector<std::string> Parser::Split(std::string str, std::string delim)
 {
@@ -265,6 +378,21 @@ std::vector<std::string> Parser::Split(std::string str, std::string delim)
     std::string Parser::PrepareToSave()
     {
         std::stringstream ss;
+        
+        for (DefaultsData* defaults : DataManager::getInstance()->GetDefaultses())
+        {
+            ss << "Defaults" << defaults->GetTypeToFile()
+               << ((defaults->GetType() != DefaultsType::ALL_DEFAULTS) ? defaults->GetOwner() : "") << " "
+               << g_DefaultsParamNames[static_cast<int>(defaults->GetParam())];
+            
+            if (!defaults->GetValues().empty())
+            {
+                ss << "=" << defaults->GetValues();
+            }
+            ss << std::endl;
+        }
+        
+        ss << std::endl << std::endl;
         
         for (AliasData* alias : DataManager::getInstance()->GetAliases())
         {

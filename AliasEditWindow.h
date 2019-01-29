@@ -8,7 +8,6 @@
  * File:   AliasEditWindow.h
  * Author: sssililliths
  *
- * Created on 10 stycznia 2019, 19:25
  */
 
 #ifndef ALIASEDITWINDOW_H

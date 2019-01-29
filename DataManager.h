@@ -15,6 +15,7 @@
 
 #include "AliasData.h"
 #include "UserData.h"
+#include "DefaultsData.h"
 
 
 class DataManager {
@@ -52,6 +53,20 @@ public:
     void RemoveUser(std::string name);
     void SetUserComment(std::string name, std::string comment);
     
+    void AddDefaults(
+        DefaultsType type, 
+        std::string owner,
+        std::string param,
+        std::string values);    
+    DefaultsData* GetDefaults(DefaultsType type, DefaultsParams param);
+    std::list<DefaultsData*> GetDefaultses();
+    void ModifyDefaults(
+        DefaultsType type, 
+        std::string owner,
+        DefaultsParams param,
+        std::string values);
+    void RemoveDefaults(DefaultsType type, DefaultsParams param, std::string owner);
+    
 private:    
     DataManager();
     ~DataManager();
@@ -61,6 +76,7 @@ private:
     
     std::list<AliasData*> mAliases;
     std::list<UserData*> mUsers;
+    std::list<DefaultsData*> mDefaults;
 };
 
 #endif /* DATAMANAGER_H */

@@ -14,6 +14,7 @@
 #include <gtk/gtk.h>
 #include "MainWindow.h"
 #include "FileManager.h"
+#include "DefaultsParams.h"
 
 void OnClickOpenMenuItem (GtkMenuItem *menuitem, gpointer user_data)
 {
@@ -50,6 +51,40 @@ void OnClickBtnRemoveAlias(GtkWidget *btn, gpointer user_data)
         std::stringstream ss;
         ss << data;
         DataManager::getInstance()->RemoveAlias(ss.str());
+        MainWindow::getInstance()->ShowData();
+    }
+}
+
+
+void OnClickBtnRemoveDefaults(GtkWidget *btn, gpointer user_data)
+{
+    GtkTreeIter iter;
+    GtkTreeSelection *selection;
+    GtkTreeModel* model;
+    
+    selection = gtk_tree_view_get_selection(static_cast<GtkTreeView*>(user_data));
+    gboolean isSelected = gtk_tree_selection_get_selected (selection,
+                                 &model,
+                                 &iter);
+    
+    if (isSelected)
+    {
+        gchar* param;
+        gchar* type;
+        gchar* owner;
+        gtk_tree_model_get (model, &iter,
+                           DefaultsCols::COL_PARAM, &param,
+                           DefaultsCols::COL_TYPE, &type,
+                           DefaultsCols::COL_OWNER, &owner,
+                           -1);
+
+        std::stringstream ssparam;
+        std::stringstream sstype;
+        std::stringstream ssowner;
+        ssparam << param;
+        sstype << type;
+        ssowner << owner;
+        DataManager::getInstance()->RemoveDefaults(GetTypeFromName(sstype.str()), GetParamFromName(ssparam.str()), ssowner.str());
         MainWindow::getInstance()->ShowData();
     }
 }
@@ -122,22 +157,29 @@ void MainWindow::ShowWindow()
     GtkWidget* menuSave  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "imiSave"));
     GtkWidget* treeViewAlias   = GTK_WIDGET(gtk_builder_get_object(mBuilder, "trvAliasData"));
     GtkWidget* treeViewUser   = GTK_WIDGET(gtk_builder_get_object(mBuilder, "trvUserData"));
+    GtkWidget* treeViewDefaults   = GTK_WIDGET(gtk_builder_get_object(mBuilder, "trvDefaultsData"));
     GtkWidget* buttonAliasAdd  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnAliasAdd"));
     GtkWidget* buttonAliasEdit  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnAliasModify"));
     GtkWidget* buttonUserAdd  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnUserAdd"));
     GtkWidget* buttonUserEdit  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnUserModify"));
     GtkWidget* buttonAliasRemove  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnAliasRemove"));
-    GtkWidget* buttonUserRemove  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnUserRemove"));
+    GtkWidget* buttonUserRemove  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnUserRemove"));    
+    GtkWidget* buttonDefaultsEdit  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnDefaultsModify"));
+    GtkWidget* buttonDefaultsRemove  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnDefaultsRemove"));
+    GtkWidget* buttonDefaultsAdd  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnDefaultsAdd"));
         
     g_signal_connect (mWindow, "destroy", G_CALLBACK (gtk_main_quit), NULL);
     g_signal_connect (menuOpen, "activate", G_CALLBACK (OnClickOpenMenuItem), NULL);
     g_signal_connect (menuSave, "activate", G_CALLBACK (OnClickSaveMenuItem), NULL);
     g_signal_connect (buttonAliasAdd, "clicked", G_CALLBACK (OnClickBtnAddAlias), NULL);
     g_signal_connect (buttonUserAdd, "clicked", G_CALLBACK (OnClickBtnAddUser), NULL);
+    g_signal_connect (buttonDefaultsAdd, "clicked", G_CALLBACK (OnClickBtnAddDefaults), NULL);
     g_signal_connect (buttonAliasEdit, "clicked", G_CALLBACK (OnClickBtnModifyAlias), treeViewAlias);
     g_signal_connect (buttonUserEdit, "clicked", G_CALLBACK (OnClickBtnModifyUser), treeViewUser);
+    g_signal_connect (buttonDefaultsEdit, "clicked", G_CALLBACK (OnClickBtnModifyDefaults), treeViewDefaults);
     g_signal_connect (buttonAliasRemove, "clicked", G_CALLBACK (OnClickBtnRemoveAlias), treeViewAlias);
     g_signal_connect (buttonUserRemove, "clicked", G_CALLBACK (OnClickBtnRemoveUser), treeViewUser);
+    g_signal_connect (buttonDefaultsRemove, "clicked", G_CALLBACK (OnClickBtnRemoveDefaults), treeViewDefaults);
     
     gtk_widget_show( mWindow );
     gtk_main();
@@ -147,10 +189,12 @@ void MainWindow::PrepareTabs(GtkWidget* notebook)
 {
     PrepareAliasTab(notebook);
     PrepareUserTab(notebook);
+    PrepareDefaultsTab(notebook);
 }
 
 void MainWindow::ShowData()
 {    
     PrepareAliases();
     PrepareUsers();
+    PrepareDefaults();
 }

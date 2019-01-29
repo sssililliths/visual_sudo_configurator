@@ -11,6 +11,7 @@
  */
 
 #include "DataManager.h"
+#include "DefaultsParams.h"
 
 
 DataManager* DataManager::mInstance = 0;
@@ -189,6 +190,77 @@ DataManager* DataManager::getInstance()
             if (elem->GetName() == name)
             {
                 elem->SetComment(comment);
+                return;
+            }
+        }
+    }
+    
+    
+    void DataManager::AddDefaults(
+        DefaultsType type, 
+        std::string owner,
+        std::string param,
+        std::string values)
+    {
+        DefaultsData* defaults = NULL;
+        DefaultsParams params;
+        for(long i = 0; i < static_cast<long>(DefaultsParams::NUM_OF_PARAMS); i++)
+        {
+            if(param == g_DefaultsParamNames[i])
+            {
+                params = static_cast<DefaultsParams>(i);
+                break;
+            }
+        }
+        
+        defaults = new DefaultsData(type, params, values, owner);
+        mDefaults.push_back(defaults);
+    }
+    
+    
+    DefaultsData* DataManager::GetDefaults(DefaultsType type, DefaultsParams param)
+    {
+        for(DefaultsData* elem : mDefaults)
+        {
+            if (elem->GetType() == type && elem->GetParam() == param)
+            {
+                return elem;
+            }
+        }
+        
+        return NULL;
+    }
+    
+    std::list<DefaultsData*> DataManager::GetDefaultses()
+    {
+        return mDefaults;
+    }
+    
+    void DataManager::ModifyDefaults(
+        DefaultsType type, 
+        std::string owner,
+        DefaultsParams param,
+        std::string values)
+    {
+        for(DefaultsData* elem : mDefaults)
+        {
+            if (elem->GetType() == type && elem->GetParam() == param)
+            {
+                elem->SetOwner(owner);
+                elem->SetValues(values);
+            }
+        }
+    }
+    
+    void DataManager::RemoveDefaults(DefaultsType type, DefaultsParams param, std::string owner)
+    {
+        for (DefaultsData* elem : mDefaults)
+        {
+            if (elem->GetType() == type &&
+                elem->GetParam() == param &&
+                elem->GetOwner() == owner)
+            {
+                mDefaults.remove(elem);
                 return;
             }
         }

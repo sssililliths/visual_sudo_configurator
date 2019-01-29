@@ -15,6 +15,7 @@
 
 #include "AliasData.h"
 #include "UserData.h"
+#include "DefaultsData.h"
 #include <vector>
 
 enum class LastElement
@@ -39,9 +40,11 @@ private:
     std::string ToLower(std::string str);
     
     AliasType GetAliasType(std::string str);
+    DefaultsType GetDefaultsType(std::string str);
     void ParseAlias(std::vector<std::string> aliasData);
     template<bool isGroup>
     void ParseUser(std::vector<std::string> aliasData);
+    void ParseDefaults(std::vector<std::string> defaultData);
     
 private:
     static Parser* mInstance;
