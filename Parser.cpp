@@ -44,7 +44,10 @@ Parser* Parser::getInstance()
 std::string Parser::ParseLine(std::string line, unsigned cnt)
 {
     std::string error = "";
-    if (line.empty()) return "";
+    if (line.empty() 
+     || line.find_first_not_of(' ') == std::string::npos) 
+        return "";
+    
     DataManager* dm = DataManager::getInstance();
     
     std::vector<std::string> lineData = Split(line);
@@ -123,6 +126,7 @@ std::string Parser::ParseLine(std::string line, unsigned cnt)
 void Parser::ParseDefaults(std::vector<std::string> defaultData)
 {
     DefaultsType type = DefaultsType::ALL_DEFAULTS;
+    DefaultsSign sign = DefaultsSign::NONE;
     int currElem = 1;
     std::string param;
     std::string values;
@@ -151,12 +155,26 @@ void Parser::ParseDefaults(std::vector<std::string> defaultData)
     * Type is all
     */    
     
-    if (defaultData[currElem].find("=") != std::string::npos)
+    if (defaultData[currElem].find("=") != std::string::npos && defaultData[currElem].length() > 2)
     {
         if(defaultData[currElem].back() == '=')
-        {
-            // defaults param= ..., just remove =
-            param = defaultData[currElem].substr(0, defaultData[currElem].size() - 1);
+        {            
+            if (defaultData[currElem].back() == '+')
+            {
+                sign = DefaultsSign::APPEND;
+                param = defaultData[currElem].substr(0, defaultData[currElem].size() - 2);
+            }            
+            else if (defaultData[currElem].back() == '-')
+            {
+                sign = DefaultsSign::REMOVE;
+                param = defaultData[currElem].substr(0, defaultData[currElem].size() - 2);
+            }
+            else
+            {                
+                sign = DefaultsSign::ASSIGN;
+                // defaults param= ..., just remove =
+                param = defaultData[currElem].substr(0, defaultData[currElem].size() - 1);
+            }
             currElem++;
             values = defaultData[currElem];
         }
@@ -164,7 +182,21 @@ void Parser::ParseDefaults(std::vector<std::string> defaultData)
         {
             // Default param=val
             std::vector<std::string> tmp = Split(defaultData[currElem], "=");
-            param = tmp[0];
+            if (tmp[0].back() == '+')
+            {
+                sign = DefaultsSign::APPEND;
+                param = tmp[0].substr(0, defaultData[currElem].size() - 1);                
+            }
+            else if (tmp[0].back() == '-')
+            {
+                sign = DefaultsSign::REMOVE;
+                param = tmp[0].substr(0, defaultData[currElem].size() - 1);                
+            }
+            else
+            {
+                sign = DefaultsSign::ASSIGN;
+                param = tmp[0];
+            }
             values = tmp[1];
         }
     }    
@@ -172,21 +204,59 @@ void Parser::ParseDefaults(std::vector<std::string> defaultData)
     {
         // Default param
         param = defaultData[currElem];
+        if (param[0] == '!')
+        {
+            sign = DefaultsSign::NEG;
+            param = param.substr(1, param.size());
+        }
     }
-    else if(defaultData[currElem] == "=")
+    else if(defaultData[currElem+1].find("=") != std::string::npos && defaultData[currElem].length() <= 2)
     {
+        if (defaultData[currElem+1] [0] == '+')
+        {
+            sign = DefaultsSign::APPEND;
+        }
+        else if (defaultData[currElem+1] [0] == '-')
+        {
+            sign = DefaultsSign::REMOVE;
+        }
+        else // '='
+        {
+            sign = DefaultsSign::ASSIGN;
+        }
+        
         // Defaults param = value
         param = defaultData[currElem];
-        values = defaultData[++currElem];
+        currElem += 2;
+        values = defaultData[currElem];
     }
     else
     {
          // Defaults param =value_list
         param = defaultData[currElem];
         currElem++;
-        values = defaultData[currElem].substr(1, defaultData[currElem].size());
+        if (defaultData[currElem][0] == '+')
+        {
+            sign = DefaultsSign::APPEND;
+            values = defaultData[currElem].substr(3, defaultData[currElem].size());
+        }
+        else if (defaultData[currElem][0] == '-')
+        {
+            sign = DefaultsSign::REMOVE;
+            values = defaultData[currElem].substr(3, defaultData[currElem].size());
+        }
+        else // '='
+        {
+            sign = DefaultsSign::ASSIGN;
+            values = defaultData[currElem].substr(2, defaultData[currElem].size());
+        }
     }
     currElem++;
+    
+    if(values[0] == '\"')
+    {
+        values = values.substr(2, values.size());
+    }
     
     bool hasComment = false;
     for(int i = currElem; i < defaultData.size(); i++)
@@ -200,7 +270,12 @@ void Parser::ParseDefaults(std::vector<std::string> defaultData)
         values += " " + defaultData[i];
     }
     
-    DataManager::getInstance()->AddDefaults(type, owner, param, values, true);
+    if (values[values.length()-1] == '\"')
+    {
+        values = values.substr(0, values.size()-1);  
+    }
+    
+    DataManager::getInstance()->AddDefaults(type, owner, param, values, sign, true);
     mLastDefaults = DataManager::getInstance()->GetLastDefaults();
     
     if (hasComment)
@@ -329,6 +404,10 @@ std::string Parser::ParseUser(std::vector<std::string> userData, unsigned line)
         if (tmp[tmp.length()-1] == ',')
         {
             tmp = tmp.substr(0, tmp.length()-1);
+        }
+        if (tmp[tmp.length()-1] == ':')
+        {
+            tmp += userData[++i];
         }
         if (tmp[0] == '#')
         {
@@ -516,11 +595,31 @@ std::vector<std::string> Parser::Split(std::string str, std::string delim)
         {
             ss << "Defaults" << defaults->GetTypeToFile()
                << ((defaults->GetType() != DefaultsType::ALL_DEFAULTS) ? defaults->GetOwner() : "") << " "
+               << ((defaults->GetSign() == DefaultsSign::NEG) ? "!" : "")
                << g_DefaultsParamNames[static_cast<int>(defaults->GetParam())];
             
             if (!defaults->GetValues().empty())
             {
-                ss << "=" << defaults->GetValues();
+                switch (defaults->GetSign())
+                {
+                    case DefaultsSign::APPEND:
+                        ss << " += ";
+                        break;
+                    case DefaultsSign::ASSIGN:
+                        ss << " = ";
+                        break;
+                    case DefaultsSign::REMOVE:
+                        ss << " -= ";
+                        break;
+                }
+                
+                bool multiple = defaults->GetValues().find(' ') != std::string::npos;
+                if (multiple)
+                {
+                    ss << "\"";
+                }
+                ss << defaults->GetValues()
+                   << (multiple ? "\"\n" : "\n");
             }
             
             ss << std::endl;

@@ -1517,6 +1517,44 @@ const std::string gDefaultsWindow =
               </packing>\
             </child>\
             <child>\
+              <object class=\"GtkBox\">\
+                <property name=\"visible\">True</property>\
+                <property name=\"can_focus\">False</property>\
+                <property name=\"orientation\">vertical</property>\
+                <child>\
+                  <object class=\"GtkLabel\">\
+                    <property name=\"visible\">True</property>\
+                    <property name=\"can_focus\">False</property>\
+                    <property name=\"margin_top\">5</property>\
+                    <property name=\"label\" translatable=\"yes\">Method</property>\
+                  </object>\
+                  <packing>\
+                    <property name=\"expand\">False</property>\
+                    <property name=\"fill\">True</property>\
+                    <property name=\"position\">0</property>\
+                  </packing>\
+                </child>\
+                <child>\
+                  <object class=\"GtkComboBoxText\" id=\"cmbMethod\">\
+                    <property name=\"name\">cmbMethod</property>\
+                    <property name=\"visible\">True</property>\
+                    <property name=\"can_focus\">False</property>\
+                    <property name=\"margin_top\">10</property>\
+                  </object>\
+                  <packing>\
+                    <property name=\"expand\">False</property>\
+                    <property name=\"fill\">True</property>\
+                    <property name=\"position\">1</property>\
+                  </packing>\
+                </child>\
+              </object>\
+              <packing>\
+                <property name=\"expand\">False</property>\
+                <property name=\"fill\">True</property>\
+                <property name=\"position\">3</property>\
+              </packing>\
+            </child>\
+            <child>\
               <object class=\"GtkBox\" id=\"boxValues\">\
                 <property name=\"visible\">True</property>\
                 <property name=\"can_focus\">False</property>\

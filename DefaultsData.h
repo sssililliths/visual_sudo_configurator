@@ -27,6 +27,15 @@ enum class DefaultsType
     NUM_TYPES
 };
 
+enum class DefaultsSign
+{
+    NONE,
+    ASSIGN,
+    APPEND,
+    REMOVE,
+    NEG
+};
+
 
  enum class DefaultsCols
  {
@@ -45,12 +54,15 @@ public:
         DefaultsType type, 
         DefaultsParams param,
         std::string values,
-        std::string owner = "");
+        std::string owner = "",
+        DefaultsSign sign = DefaultsSign::NONE);
     ~DefaultsData();
     
     inline DefaultsType GetType() { return mType; }
     std::string GetValues() { return mValues; }
     inline void SetType(DefaultsType type) { mType = type; }
+    void SetSign(DefaultsSign s) { mSign = s; }
+    DefaultsSign GetSign() { return mSign; }
     void SetValues(std::string val) { mValues = val; }
     void SetOwner(std::string owner) { mOwner = owner; }
     void SetParam(DefaultsParams param) { mParam = param; }
@@ -72,6 +84,7 @@ private:
     std::string mOwner;
     DefaultsParams mParam;
     std::list<std::string> mComment;
+    DefaultsSign mSign;
 
 };
 

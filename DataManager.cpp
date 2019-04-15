@@ -360,6 +360,7 @@ void DataManager::SetMainComment(std::string val)
         std::string owner,
         std::string param,
         std::string values,
+        DefaultsSign sign,
         bool fromParser)
     {
         DefaultsData* defaults = NULL;
@@ -374,7 +375,7 @@ void DataManager::SetMainComment(std::string val)
         }
         
         mChanged = !fromParser;
-        defaults = new DefaultsData(GetDefaultsId(), type, params, values, owner);
+        defaults = new DefaultsData(GetDefaultsId(), type, params, values, owner, sign);
         mDefaults.push_back(defaults);
     }
   
@@ -405,7 +406,8 @@ void DataManager::SetMainComment(std::string val)
         DefaultsType type, 
         std::string owner,
         DefaultsParams param,
-        std::string values)
+        std::string values,
+        DefaultsSign sign)
     {
         for(DefaultsData* elem : mDefaults)
         {
@@ -416,6 +418,7 @@ void DataManager::SetMainComment(std::string val)
                 elem->SetOwner(owner);
                 elem->SetParam(param);
                 elem->SetValues(values);
+                elem->SetSign(sign);
             }
         }
     }

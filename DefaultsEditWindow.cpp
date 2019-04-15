@@ -17,6 +17,7 @@
 
 
 const char *defaultsTypes[] = { "", "USER", "RUNAS", "HOST", "CMDS"};
+const char *defaultsMethods[] = { "", "=", "+=", "-=", "!"};
 
 DefaultsEditWindow* DefaultsEditWindow::mInstance = 0;
     
@@ -29,14 +30,17 @@ void OnCloseDefaultsWindow()
 
 void OnSaveDefaultsData(GtkWidget *btn, gpointer user_data)
 {
+    char* empty = "";
     GtkWidget* cmbType  = GTK_WIDGET(gtk_builder_get_object(DefaultsEditWindow::getInstance()->mBuilder, "cmbType"));
     gchar* activeType = gtk_combo_box_text_get_active_text (GTK_COMBO_BOX_TEXT (cmbType));
+    activeType = (activeType == NULL) ? empty : activeType; 
     DefaultsType type = DefaultsType::NUM_TYPES;
     for (int i = 0; i < static_cast<int>(DefaultsType::NUM_TYPES); i++)
     {
         if (strcmp(activeType, defaultsTypes[i]) == 0)
         {
             type = static_cast<DefaultsType>(i);
+            break;
         }
     }
         
@@ -51,6 +55,19 @@ void OnSaveDefaultsData(GtkWidget *btn, gpointer user_data)
         if(paramType == g_DefaultsParamNames[i])
         {
             ptype = static_cast<DefaultsParams>(i);
+            break;
+        }
+    }
+    
+    GtkWidget* cmbMethod  = GTK_WIDGET(gtk_builder_get_object(DefaultsEditWindow::getInstance()->mBuilder, "cmbMethod"));
+    gchar* activeSign = gtk_combo_box_text_get_active_text (GTK_COMBO_BOX_TEXT (cmbMethod));
+    activeSign = (activeSign == NULL) ? empty : activeSign; 
+    DefaultsSign sign = DefaultsSign::NEG;
+    for (int i = 0; i <= static_cast<int>(DefaultsSign::NEG); i++)
+    {
+        if (strcmp(activeSign, defaultsMethods[i]) == 0)
+        {
+            sign = static_cast<DefaultsSign>(i);
             break;
         }
     }
@@ -81,12 +98,12 @@ void OnSaveDefaultsData(GtkWidget *btn, gpointer user_data)
     {
         if(*edit)
         {    
-            DataManager::getInstance()->ModifyDefaults(id, type, owner, ptype, val);
+            DataManager::getInstance()->ModifyDefaults(id, type, owner, ptype, val, sign);
             *edit = false;
         }
         else
         {
-            DataManager::getInstance()->AddDefaults(type, owner, paramType, val, false);
+            DataManager::getInstance()->AddDefaults(type, owner, paramType, val, sign, false);
         }
         DataManager::getInstance()->SetDefaultsComment((*edit) ? id : DataManager::getInstance()->GetDefaultsId()-1, comment, false);
     }
@@ -187,8 +204,11 @@ bool DefaultsEditWindow::SetValues(unsigned id)
     GtkWidget* cmbType  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "cmbType"));
     gtk_combo_box_set_active (GTK_COMBO_BOX(cmbType), static_cast<int>(currDefaults->GetType()));
     
+    GtkWidget* cmbMethod  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "cmbMethod"));
+    gtk_combo_box_set_active (GTK_COMBO_BOX(cmbMethod), static_cast<int>(currDefaults->GetSign()));
+    
     GtkWidget* cmbParameter  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "cmbParameter"));
-    gtk_combo_box_set_active (GTK_COMBO_BOX(cmbParameter), static_cast<int>(currDefaults->GetType()));
+    gtk_combo_box_set_active (GTK_COMBO_BOX(cmbParameter), static_cast<int>(currDefaults->GetParam()));
     
     GtkWidget* txtOwner  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "txtOwner"));    
     
@@ -231,11 +251,16 @@ bool DefaultsEditWindow::PrepareEditWindow()
     
     mWindow = GTK_WIDGET(gtk_builder_get_object(mBuilder, "wndDefaultsEdit"));
     GtkWidget* cmbType  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "cmbType"));
+    GtkWidget* cmbMethod  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "cmbMethod"));
     GtkWidget* cmbParam  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "cmbParameter"));
     
     for (int i = 0; i < static_cast<int>(DefaultsType::NUM_TYPES); i++)
     {
   	gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (cmbType), defaultsTypes[i]);
+    }
+    for (int i = 0; i <= static_cast<int>(DefaultsSign::NEG); i++)
+    {
+  	gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (cmbMethod), defaultsMethods[i]);
     }
     for (int i = 0; i < static_cast<int>(DefaultsParams::NUM_OF_PARAMS); i++)
     {
@@ -272,10 +297,6 @@ bool DefaultsEditWindow::CheckValidChars(DefaultsCols elemType, std::string elem
         if(element.find('#') != std::string::npos)
         {
             wrongChars.append("# ");
-        }
-        if(element.find(' ') != std::string::npos)
-        {
-            wrongChars.append("space ");
         }
         break;
     }    

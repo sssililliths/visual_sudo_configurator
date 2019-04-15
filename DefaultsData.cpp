@@ -18,12 +18,14 @@ DefaultsData::DefaultsData(
     DefaultsType type, 
     DefaultsParams param,
     std::string values,
-    std::string owner) :
+    std::string owner,
+    DefaultsSign sign) :
         mId(id),
         mParam(param),
         mType(type),
         mValues(values),
-        mOwner(owner)
+        mOwner(owner),
+        mSign(sign)
 {
 }
 

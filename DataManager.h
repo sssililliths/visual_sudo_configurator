@@ -89,6 +89,7 @@ public:
         std::string owner,
         std::string param,
         std::string values,
+        DefaultsSign sign,
         bool fromParser);    
     
     DefaultsData* GetDefaults(unsigned id);
@@ -100,7 +101,8 @@ public:
         DefaultsType type, 
         std::string owner,
         DefaultsParams param,
-        std::string values);
+        std::string values,
+        DefaultsSign sign);
     
     void RemoveDefaults(unsigned id);
     
