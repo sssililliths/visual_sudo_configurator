@@ -17,6 +17,18 @@
 #include <algorithm> 
 #include <sstream>
 
+
+void ReplaceAll(std::string& str, const std::string& from, const std::string& to) 
+{
+    size_t start_pos = 0;
+    while((start_pos = str.find(from, start_pos)) != std::string::npos) 
+    {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length();
+    }
+}
+
+
 Parser* Parser::mInstance = 0;
 
 //------------------------------------------------------------------------------
@@ -24,7 +36,9 @@ Parser* Parser::mInstance = 0;
 Parser::Parser() :
     mLastUser(NULL),
     mLastAlias(NULL),
-    mMainComment("")
+    mMainComment(""),
+    mContinue(false),
+    mNextLine(false)
 {}
 
 //------------------------------------------------------------------------------
@@ -44,218 +58,235 @@ Parser* Parser::getInstance()
 std::string Parser::ParseLine(std::string line, unsigned cnt)
 {
     std::string error = "";
+    ReplaceAll(line, "\t", "    ");
+    ReplaceAll(line, "\r", "");
     if (line.empty() 
      || line.find_first_not_of(' ') == std::string::npos) 
         return "";
-    
-    DataManager* dm = DataManager::getInstance();
-    
+        
     std::vector<std::string> lineData = Split(line);
-    
-    if(ToLower(lineData[0]).find("_alias") != std::string::npos) // aliases
-    {
-        ParseAlias(lineData);
-        mLastParsedType = LastElement::LINE_ALIAS;
-    } 
-    else if (ToLower(lineData[0]).find("defaults") == 0)
-    {
-        ParseDefaults(lineData);
-        mLastParsedType = LastElement::LINE_DEFAULTS;
-    }
-    else if (lineData[0][0] == '#')
-    {
-        if(ToLower(lineData[0]).find("includedir") != std::string::npos)
+    if (!mContinue)
+    {    
+        if(ToLower(lineData[0]).find("_alias") != std::string::npos) // aliases
         {
-            DataManager::getInstance()->AppendIncludedir(lineData[1]);
+            ParseAlias(lineData);
+            mLastParsedType = LastElement::LINE_ALIAS;
+        } 
+        else if (ToLower(lineData[0]).find("defaults") == 0)
+        {
+            ParseDefaults(lineData);
+            mLastParsedType = LastElement::LINE_DEFAULTS;
         }
-        else if(ToLower(lineData[0]).find("include") != std::string::npos)
+        else if (lineData[0][0] == '#')
         {
-            DataManager::getInstance()->AppendInclude(lineData[1]);
-        }
-        else // comment
-        {
-            std::stringstream ss;
-            for (std::string word : lineData)
-                ss << word << " ";
-            std::string tmp = ss.str();
-            tmp = tmp.substr (1,tmp.length()-1);
-            if (tmp[0] == ' ')
+            if(ToLower(lineData[0]).find("includedir") != std::string::npos)
             {
+                DataManager::getInstance()->AppendIncludedir(lineData[1]);
+            }
+            else if(ToLower(lineData[0]).find("include") != std::string::npos)
+            {
+                DataManager::getInstance()->AppendInclude(lineData[1]);
+            }
+            else // comment
+            {
+                std::stringstream ss;
+                for (std::string word : lineData)
+                    ss << word << " ";
+                std::string tmp = ss.str();
                 tmp = tmp.substr (1,tmp.length()-1);
-            }
+                if (tmp[0] == ' ')
+                {
+                    tmp = tmp.substr (1,tmp.length()-1);
+                }
 
-            if (mLastParsedType == LastElement::LINE_ALIAS)
-            {
-                if (mLastAlias)
-                    mLastAlias->AppendComment(tmp);
-            }
-            else if (mLastParsedType == LastElement::LINE_USER)
-            {
-                if (mLastUser)
-                    mLastUser->AppendComment(tmp);
-            }
-            else if (mLastParsedType == LastElement::LINE_DEFAULTS)
-            {
-                if (mLastDefaults)
-                    mLastDefaults->AppendComment(tmp);
-            }
-            else
-            {
-                DataManager::getInstance()->AppendMainComment(tmp);
+                if (mLastParsedType == LastElement::LINE_ALIAS)
+                {
+                    if (mLastAlias)
+                        mLastAlias->AppendComment(tmp);
+                }
+                else if (mLastParsedType == LastElement::LINE_USER)
+                {
+                    if (mLastUser)
+                        mLastUser->AppendComment(tmp);
+                }
+                else if (mLastParsedType == LastElement::LINE_DEFAULTS)
+                {
+                    if (mLastDefaults)
+                        mLastDefaults->AppendComment(tmp);
+                }
+                else
+                {
+                    DataManager::getInstance()->AppendMainComment(tmp);
+                }
             }
         }
-    }
-    else if (lineData[0][0] == '%' || 
-            (dm->GetAliasByName(lineData[0]) != NULL && 
-                (dm->GetAliasByName(lineData[0])->GetType() == AliasType::USER_ALIAS))) // groups
-    {
-        error = ParseUser<true>(lineData, cnt);
-        mLastParsedType = LastElement::LINE_USER;
+        else if (lineData[0][0] == '%' || 
+                (DataManager::getInstance()->GetAliasByName(lineData[0]) != NULL && 
+                    (DataManager::getInstance()->GetAliasByName(lineData[0])->GetType() == AliasType::USER_ALIAS))) // groups
+        {
+            error = ParseUser<true>(lineData, cnt);
+            mLastParsedType = LastElement::LINE_USER;
+        }
+        else
+        {
+            error = ParseUser<false>(lineData, cnt);
+            mLastParsedType = LastElement::LINE_USER;
+        } 
     }
     else
     {
-        error = ParseUser<false>(lineData, cnt);
-        mLastParsedType = LastElement::LINE_USER;
-    } 
+        switch(mLastParsedType)
+        {
+            case LastElement::LINE_ALIAS:
+                ParseAlias(lineData, mLastAlias, mNextLine);
+                break;
+            case LastElement::LINE_DEFAULTS:
+                ParseDefaults(lineData, mLastDefaults);
+                break;
+            case LastElement::LINE_USER:
+                ParseUser<false>(lineData, cnt, mLastUser);
+                break;
+        }
+    }
     
+    mContinue = (line[line.length()-1] == '\\');
+    mNextLine = (line[line.length()-2] == ':');
     return error;
 }
 
 //------------------------------------------------------------------------------
 
-void Parser::ParseDefaults(std::vector<std::string> defaultData)
+void Parser::ParseDefaults(std::vector<std::string> defaultData, DefaultsData* defaults)
 {
     DefaultsType type = DefaultsType::ALL_DEFAULTS;
     DefaultsSign sign = DefaultsSign::NONE;
-    int currElem = 1;
+    int currElem = defaults ? 0 : 1;
     std::string param;
     std::string values;
     std::string owner;
     
-    // check type
-    if(ToLower(defaultData[0]) != "defaults")
+    if (!defaults)
     {
-        unsigned len = std::string("defaults").size();
-        type = GetDefaultsType(defaultData[0].substr(len, 1));
-        owner = defaultData[0].substr(len + 1, std::string::npos);
-    }
-    
-    /*
-    * Defaults param
-    *    [0]    [1]
-    * Defaults param = value
-    *    [0]    [1] [2]   [3]
-    * Defaults param= value
-    *    [0]    [1]      [2]
-    * Defaults param =value
-    *    [0]    [1]     [2]
-    * Defaults param=value
-    *    [0]        [1]
-    *
-    * Type is all
-    */    
-    
-    if (defaultData[currElem].find("=") != std::string::npos && defaultData[currElem].length() > 2)
-    {
-        if(defaultData[currElem].back() == '=')
-        {            
-            if (defaultData[currElem].back() == '+')
-            {
-                sign = DefaultsSign::APPEND;
-                param = defaultData[currElem].substr(0, defaultData[currElem].size() - 2);
-            }            
-            else if (defaultData[currElem].back() == '-')
-            {
-                sign = DefaultsSign::REMOVE;
-                param = defaultData[currElem].substr(0, defaultData[currElem].size() - 2);
+        // check type
+        if(ToLower(defaultData[0]) != "defaults")
+        {
+            unsigned len = std::string("defaults").size();
+            type = GetDefaultsType(defaultData[0].substr(len, 1));
+            owner = defaultData[0].substr(len + 1, std::string::npos);
+        }
+
+        /*
+        * Defaults param
+        *    [0]    [1]
+        * Defaults param = value
+        *    [0]    [1] [2]   [3]
+        * Defaults param= value
+        *    [0]    [1]      [2]
+        * Defaults param =value
+        *    [0]    [1]     [2]
+        * Defaults param=value
+        *    [0]        [1]
+        *
+        * Type is all
+        */    
+
+        if (defaultData[currElem].find("=") != std::string::npos && defaultData[currElem].length() > 2)
+        {
+            if(defaultData[currElem].back() == '=')
+            {            
+                if (defaultData[currElem].back() == '+')
+                {
+                    sign = DefaultsSign::APPEND;
+                    param = defaultData[currElem].substr(0, defaultData[currElem].size() - 2);
+                }            
+                else if (defaultData[currElem].back() == '-')
+                {
+                    sign = DefaultsSign::REMOVE;
+                    param = defaultData[currElem].substr(0, defaultData[currElem].size() - 2);
+                }
+                else
+                {                
+                    sign = DefaultsSign::ASSIGN;
+                    // defaults param= ..., just remove =
+                    param = defaultData[currElem].substr(0, defaultData[currElem].size() - 1);
+                }
+                currElem++;
+                values = defaultData[currElem];
             }
             else
-            {                
-                sign = DefaultsSign::ASSIGN;
-                // defaults param= ..., just remove =
-                param = defaultData[currElem].substr(0, defaultData[currElem].size() - 1);
+            {
+                // Default param=val
+                std::vector<std::string> tmp = Split(defaultData[currElem], "=");
+                if (tmp[0].back() == '+')
+                {
+                    sign = DefaultsSign::APPEND;
+                    param = tmp[0].substr(0, defaultData[currElem].size() - 1);                
+                }
+                else if (tmp[0].back() == '-')
+                {
+                    sign = DefaultsSign::REMOVE;
+                    param = tmp[0].substr(0, defaultData[currElem].size() - 1);                
+                }
+                else
+                {
+                    sign = DefaultsSign::ASSIGN;
+                    param = tmp[0];
+                }
+                values = tmp[1];
             }
-            currElem++;
+        }    
+        else if(defaultData.size() == 2)
+        {
+            // Default param
+            param = defaultData[currElem];
+            if (param[0] == '!')
+            {
+                sign = DefaultsSign::NEG;
+                param = param.substr(1, param.size());
+            }
+        }
+        else if(defaultData[currElem+1].find("=") != std::string::npos && defaultData[currElem+1].length() <= 2)
+        {
+            if (defaultData[currElem+1] [0] == '+')
+            {
+                sign = DefaultsSign::APPEND;
+            }
+            else if (defaultData[currElem+1] [0] == '-')
+            {
+                sign = DefaultsSign::REMOVE;
+            }
+            else // '='
+            {
+                sign = DefaultsSign::ASSIGN;
+            }
+
+            // Defaults param = value
+            param = defaultData[currElem];
+            currElem += 2;
             values = defaultData[currElem];
         }
         else
         {
-            // Default param=val
-            std::vector<std::string> tmp = Split(defaultData[currElem], "=");
-            if (tmp[0].back() == '+')
+             // Defaults param =value_list
+            param = defaultData[currElem];
+            currElem++;
+            if (defaultData[currElem][0] == '+')
             {
                 sign = DefaultsSign::APPEND;
-                param = tmp[0].substr(0, defaultData[currElem].size() - 1);                
+                values = defaultData[currElem].substr(2, defaultData[currElem].size());
             }
-            else if (tmp[0].back() == '-')
+            else if (defaultData[currElem][0] == '-')
             {
                 sign = DefaultsSign::REMOVE;
-                param = tmp[0].substr(0, defaultData[currElem].size() - 1);                
+                values = defaultData[currElem].substr(2, defaultData[currElem].size());
             }
-            else
+            else // '='
             {
                 sign = DefaultsSign::ASSIGN;
-                param = tmp[0];
+                values = defaultData[currElem].substr(1, defaultData[currElem].size());
             }
-            values = tmp[1];
         }
-    }    
-    else if(defaultData.size() == 2)
-    {
-        // Default param
-        param = defaultData[currElem];
-        if (param[0] == '!')
-        {
-            sign = DefaultsSign::NEG;
-            param = param.substr(1, param.size());
-        }
-    }
-    else if(defaultData[currElem+1].find("=") != std::string::npos && defaultData[currElem].length() <= 2)
-    {
-        if (defaultData[currElem+1] [0] == '+')
-        {
-            sign = DefaultsSign::APPEND;
-        }
-        else if (defaultData[currElem+1] [0] == '-')
-        {
-            sign = DefaultsSign::REMOVE;
-        }
-        else // '='
-        {
-            sign = DefaultsSign::ASSIGN;
-        }
-        
-        // Defaults param = value
-        param = defaultData[currElem];
-        currElem += 2;
-        values = defaultData[currElem];
-    }
-    else
-    {
-         // Defaults param =value_list
-        param = defaultData[currElem];
         currElem++;
-        if (defaultData[currElem][0] == '+')
-        {
-            sign = DefaultsSign::APPEND;
-            values = defaultData[currElem].substr(3, defaultData[currElem].size());
-        }
-        else if (defaultData[currElem][0] == '-')
-        {
-            sign = DefaultsSign::REMOVE;
-            values = defaultData[currElem].substr(3, defaultData[currElem].size());
-        }
-        else // '='
-        {
-            sign = DefaultsSign::ASSIGN;
-            values = defaultData[currElem].substr(2, defaultData[currElem].size());
-        }
-    }
-    currElem++;
-    
-    if(values[0] == '\"')
-    {
-        values = values.substr(2, values.size());
     }
     
     bool hasComment = false;
@@ -270,20 +301,31 @@ void Parser::ParseDefaults(std::vector<std::string> defaultData)
         values += " " + defaultData[i];
     }
     
+    if(values[0] == '\"')
+    {
+        values = values.substr(1, values.size());
+    }
     if (values[values.length()-1] == '\"')
     {
         values = values.substr(0, values.size()-1);  
     }
     
-    DataManager::getInstance()->AddDefaults(type, owner, param, values, sign, true);
-    mLastDefaults = DataManager::getInstance()->GetLastDefaults();
+    if (!defaults)
+    {
+        DataManager::getInstance()->AddDefaults(type, owner, param, values, sign, true);
+        mLastDefaults = DataManager::getInstance()->GetLastDefaults();
+    }
+    else
+    {
+        defaults->SetValues(defaults->GetValues() + " " + values);
+    }
     
     if (hasComment)
     {
         for(int i = currElem; i < defaultData.size(); i++)
         {
             std::string tmp = defaultData[i];
-            mLastUser->AppendComment(tmp);
+            mLastDefaults->AppendComment(tmp);
         }
     }
 }
@@ -291,7 +333,7 @@ void Parser::ParseDefaults(std::vector<std::string> defaultData)
 //------------------------------------------------------------------------------
 
 template<bool isGroup>
-std::string Parser::ParseUser(std::vector<std::string> userData, unsigned line)
+std::string Parser::ParseUser(std::vector<std::string> userData, unsigned line, UserData* user)
 {
     
     if(userData.size() < 2) // minimal size of user
@@ -305,109 +347,112 @@ std::string Parser::ParseUser(std::vector<std::string> userData, unsigned line)
         return ss.str();
     }
     
-    /*
-     * group_name location=(optional_as) cmds
-     *    [0]            [1]             [2+]
-     * 
-     * group_name location= (optional_as) cmds
-     *    [0]       [1]         [2]       [3+]
-     * 
-     * group_name location = (optional_as) cmds
-     *    [0]        [1]  [2]     [3]      [4]
-     * 
-     * group_name location= (optional_as) cmds
-     *    [0]       [1]         [2]       [3+]
-     */
-    unsigned currentElement = 0;
-    bool isSystemGroup = userData[0][0] == '%';
-    if (isGroup)
-    {
-        if(isSystemGroup)
-        {
-            userData[currentElement].erase(
-                                std::find(
-                                    userData[currentElement].begin(), 
-                                    userData[currentElement].end(), 
-                                    '%')); // we don't need to have this symbol in name
-        }    
-    }
-    
-    std::string name = userData[currentElement];
+    std::string name = "";
     std::string location = "";
     std::string runAs = "";
     std::list<std::string> cmds; 
-    currentElement++; // we can now safe parse next element
-    
-    // check group where=(as) cmd, group where= (as) cmd, group where=cmd and group where= cmd
-    // currentElement is 1
-    if (userData[currentElement].find("=") != std::string::npos)
+    unsigned currentElement = 0;
+    bool isSystemGroup = userData[0][0] == '%';
+        
+    if (!user)
     {
-        // group where= ..., just remove =
-        if(userData[currentElement].back() == '=')
+        /*
+         * group_name location=(optional_as) cmds
+         *    [0]            [1]             [2+]
+         * 
+         * group_name location= (optional_as) cmds
+         *    [0]       [1]         [2]       [3+]
+         * 
+         * group_name location = (optional_as) cmds
+         *    [0]        [1]  [2]     [3]      [4]
+         * 
+         * group_name location= (optional_as) cmds
+         *    [0]       [1]         [2]       [3+]*/
+        if (isGroup)
         {
-            location = userData[currentElement].substr(0, userData[currentElement].size() - 1);
+            if(isSystemGroup)
+            {
+                userData[currentElement].erase(
+                                    std::find(
+                                        userData[currentElement].begin(), 
+                                        userData[currentElement].end(), 
+                                        '%')); // we don't need to have this symbol in name
+            }    
+        }
+
+        name = userData[currentElement];
+        location = "";
+        runAs = "";
+        currentElement++; // we can now safe parse next element
+
+        // check group where=(as) cmd, group where= (as) cmd, group where=cmd and group where= cmd
+        // currentElement is 1
+        if (userData[currentElement].find("=") != std::string::npos)
+        {
+            // group where= ..., just remove =
+            if(userData[currentElement].back() == '=')
+            {
+                location = userData[currentElement].substr(0, userData[currentElement].size() - 1);
+                currentElement++;
+
+                if(userData[currentElement].find("(") != std::string::npos) // next we have runas
+                {
+                    runAs = userData[currentElement].substr(1, userData[currentElement].size() - 2); // remove ()
+                    currentElement++;
+                }
+                // currentElement may be different, but we have only commands
+            }
+            else // group where=(as) cmd or group where=cmd
+            {
+                std::vector<std::string> tmp = Split(userData[currentElement], "=");
+                location = tmp[0];
+
+                if(tmp[1].find("(") != std::string::npos) // next we have runas
+                {
+                    runAs = tmp[1].substr(1, tmp[1].size() - 2);
+                    currentElement++;
+                }
+                else
+                {
+                    userData[currentElement] = tmp[1]; 
+                    // put command to main data vector; current won't be necessary now, but don't increment currentElement
+                }
+                // currentElement may be different, but we have only commands
+            }
+        }
+        else
+        {
+            location = userData[currentElement];
             currentElement++;
-            
+            if (userData[currentElement] == "=")
+            {
+                currentElement ++; // skip = in group where = (as) cmds or group where = cmds
+            }
+            else // creepy, group where =sth
+            {
+                // remove first char (=)
+                userData[currentElement] = userData[currentElement].substr(1, userData[currentElement].size());
+            }
+
             if(userData[currentElement].find("(") != std::string::npos) // next we have runas
             {
-                runAs = userData[currentElement].substr(1, userData[currentElement].size() - 2); // remove ()
+                runAs = userData[currentElement].substr(1, userData[currentElement].size() - 2);
                 currentElement++;
             }
             // currentElement may be different, but we have only commands
         }
-        else // group where=(as) cmd or group where=cmd
-        {
-            std::vector<std::string> tmp = Split(userData[currentElement], "=");
-            location = tmp[0];
-            
-            if(tmp[1].find("(") != std::string::npos) // next we have runas
-            {
-                runAs = tmp[1].substr(1, tmp[1].size() - 2);
-                currentElement++;
-            }
-            else
-            {
-                userData[currentElement] = tmp[1]; 
-                // put command to main data vector; current won't be necessary now, but don't increment currentElement
-            }
-            // currentElement may be different, but we have only commands
-        }
     }
-    else
-    {
-        location = userData[currentElement];
-        currentElement++;
-        if (userData[currentElement] == "=")
-        {
-            currentElement ++; // skip = in group where = (as) cmds or group where = cmds
-        }
-        else // creepy, group where =sth
-        {
-            // remove first char (=)
-            userData[currentElement] = userData[currentElement].substr(1, userData[currentElement].size());
-        }
-        
-        if(userData[currentElement].find("(") != std::string::npos) // next we have runas
-        {
-            runAs = userData[currentElement].substr(1, userData[currentElement].size() - 2);
-            currentElement++;
-        }
-        // currentElement may be different, but we have only commands
-    }
-    
     bool hasComment = false;
     
+    std::string tmp = "";
     // iterate commands and add to vec
     for(int i = currentElement; i < userData.size(); i++)
     {
-        std::string tmp = userData[i];
+        tmp += userData[i];
         if (tmp[tmp.length()-1] == ',')
         {
-            tmp = tmp.substr(0, tmp.length()-1);
-        }
-        if (tmp[tmp.length()-1] == ':')
-        {
-            tmp += userData[++i];
+            cmds.push_back(tmp.substr(0, tmp.length()-1));
+            tmp = "";
         }
         if (tmp[0] == '#')
         {
@@ -415,18 +460,39 @@ std::string Parser::ParseUser(std::vector<std::string> userData, unsigned line)
             currentElement = i;
             break;
         }
-        cmds.push_back(tmp);
+        tmp += " ";
     }
+    cmds.push_back(tmp);
     
-    DataManager::getInstance()->AddUser(name, location, runAs, cmds, true, isGroup, isSystemGroup);
-    mLastUser = DataManager::getInstance()->GetLastUser();
-    
-    if (hasComment)
+    if (!user)
     {
-        for(int i = currentElement; i < userData.size(); i++)
+        DataManager::getInstance()->AddUser(name, location, runAs, cmds, true, isGroup, isSystemGroup);
+        mLastUser = DataManager::getInstance()->GetLastUser();
+
+        if (hasComment)
         {
-            std::string tmp = userData[i];
-            mLastUser->AppendComment(tmp);
+            for(int i = currentElement; i < userData.size(); i++)
+            {
+                std::string tmp = userData[i];
+                mLastUser->AppendComment(tmp);
+            }
+        }
+    }
+    else
+    {
+        std::list<std::string> cmd = user->GetCmds();
+        for (std::string elem : cmds)
+        {
+            cmd.push_back(elem);
+        }
+        user->SetCmdsString(cmd);
+        if (hasComment)
+        {
+            for(int i = currentElement; i < userData.size(); i++)
+            {
+                std::string tmp = userData[i];
+                mLastUser->AppendComment(tmp);
+            }
         }
     }
     
@@ -435,17 +501,36 @@ std::string Parser::ParseUser(std::vector<std::string> userData, unsigned line)
 
 //------------------------------------------------------------------------------
 
-void Parser::ParseAlias(std::vector<std::string> aliasData)
+void Parser::ParseAlias(std::vector<std::string> aliasData, AliasData* prevAlias, bool nextLine)
 {
-    AliasType aliasType = GetAliasType(aliasData[0]);
-    std::string aliasName = aliasData[1];
-    std::list<std::string> aliasValues = {};
+    AliasType aliasType = (prevAlias ? prevAlias->GetType() : GetAliasType(aliasData[0]));
+    
+    std::string aliasName = "";
+    if(nextLine) aliasName = aliasData[0];
+    else aliasName = (prevAlias) ? prevAlias->GetName() : aliasData[1];
+    
+    std::list<std::string> empty = {};
+    std::list<std::string> aliasValues = (prevAlias && !nextLine) ? prevAlias->GetValues() : empty;
+    
     unsigned currentElement = 0;
     bool hasComment = false;
     
-    for (int i = 3; i < aliasData.size(); i++)
+    int i = 3;
+    if(nextLine) i = 2;
+    else if(prevAlias) i = 0;
+            
+    
+    for (i; i < aliasData.size(); i++)
     {
         std::string tmp = aliasData[i];
+        if (tmp[tmp.length()-1] == '\\')
+        {
+            tmp = tmp.substr(0, tmp.length()-1);
+        }
+        if (tmp[tmp.length()-1] == ':')
+        {
+            tmp = tmp.substr(0, tmp.length()-1);
+        }
         if (tmp[tmp.length()-1] == ',')
         {
             tmp = tmp.substr(0, tmp.length()-1);
@@ -456,10 +541,21 @@ void Parser::ParseAlias(std::vector<std::string> aliasData)
             currentElement = i;
             break;
         }
-        aliasValues.push_back(tmp);
+        
+        if (tmp != "")
+        {
+            aliasValues.push_back(tmp);
+        }
     }
     
-    DataManager::getInstance()->AddAlias(aliasName, aliasType, aliasValues, true);
+    if (prevAlias && !nextLine)
+    {   
+        prevAlias->SetValues(aliasValues);
+    }
+    else
+    {
+        DataManager::getInstance()->AddAlias(aliasName, aliasType, aliasValues, true);
+    }
     mLastAlias = DataManager::getInstance()->GetLastAlias();
     
     if (hasComment)

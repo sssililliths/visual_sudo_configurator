@@ -42,10 +42,10 @@ private:
     
     AliasType GetAliasType(std::string str);
     DefaultsType GetDefaultsType(std::string str);
-    void ParseAlias(std::vector<std::string> aliasData);
+    void ParseAlias(std::vector<std::string> aliasData, AliasData* alias = NULL, bool nextLine = false);
     template<bool isGroup>
-    std::string ParseUser(std::vector<std::string> aliasData, unsigned line);
-    void ParseDefaults(std::vector<std::string> defaultData);
+    std::string ParseUser(std::vector<std::string> aliasData, unsigned line, UserData* user = NULL);
+    void ParseDefaults(std::vector<std::string> defaultData, DefaultsData* defaults = NULL);
     
 private:
     static Parser* mInstance;
@@ -55,6 +55,9 @@ private:
     UserData* mLastUser;
     AliasData* mLastAlias;
     std::string mMainComment;
+    
+    bool mContinue;
+    bool mNextLine;
 
 };
 
