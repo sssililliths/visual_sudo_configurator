@@ -35,7 +35,8 @@ public:
     void ShowWindow();
     void ShowData();
     bool PrepareEditWindow();
-    bool SetValues(DefaultsParams param, DefaultsType type);
+    bool SetValues(unsigned id);
+    bool CheckValidChars(DefaultsCols elemType, std::string element);
     
 private:
     static DefaultsEditWindow* mInstance; 

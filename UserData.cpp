@@ -13,10 +13,12 @@
 #include "UserData.h"
 
 UserData::UserData(
+    const unsigned id,
     std::string name, 
     std::string location, 
     std::string runas,
     std::list<std::string> cmds) :
+        mId(id),
         mName(name),
         mTerminals(location),
         mAs(runas),
@@ -41,6 +43,19 @@ std::string UserData::GetCmdsString()
     }
     std::string result = ss.str();
     return result;
+}
+
+
+std::string UserData::GetCommentAsString()
+{
+    std::stringstream ss;
+    
+    for (std::string line : mComment)
+    {
+        ss << line << "\n";
+    }
+    
+    return ss.str();
 }
 
 

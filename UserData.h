@@ -20,19 +20,21 @@
 
  enum class UserCols
  {
-   COL_NAME = 0,
-   COL_LOCATION,
-   COL_RUNAS,
-   COL_CMDS,
-   COL_IS_GROUP,
-   COL_IS_SYS_GROUP,
-   NUM_COLS
+    COL_ID = 0,
+    COL_NAME,
+    COL_LOCATION,
+    COL_RUNAS,
+    COL_CMDS,
+    COL_IS_GROUP,
+    COL_IS_SYS_GROUP,
+    NUM_COLS
  };
   
  
 class UserData {
 public:
     UserData(
+        const unsigned id,
         std::string name, 
         std::string location, 
         std::string runas,
@@ -47,20 +49,25 @@ public:
     bool IsGroup() { return mGroup; }
     bool IsSysGroup() { return mSystemGroup; }
     
-    void SetComment(std::string val) { mComment = val; }
-    std::string GetComment() { return mComment; }
+    void SetComment(std::list<std::string> val) { mComment = val; }
+    void AppendComment(std::string val) { mComment.push_back(val); }
+    std::list<std::string> GetComment() { return mComment; }
+    std::string GetCommentAsString();
     void SetCmdsString(std::list<std::string> cmds) { mCommands = cmds; };
+    void SetName(std::string name) { mName = name; };
     void SetLocation(std::string location) { mTerminals = location; };
     void SetRunas(std::string runas) { mAs = runas; }
     void SetAsGroup() { mGroup = true; }
     void SetAsSystemGroup() { mGroup = true; mSystemGroup = true; }
+    
+    const unsigned mId;
     
 private:
     std::string mName;
     std::list<std::string> mCommands;
     std::string mTerminals;
     std::string mAs;
-    std::string mComment;
+    std::list<std::string> mComment;
     bool mGroup;
     bool mSystemGroup;
 

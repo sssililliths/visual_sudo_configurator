@@ -14,10 +14,12 @@
 #include <sstream>
 
 DefaultsData::DefaultsData(
+    const unsigned id,
     DefaultsType type, 
     DefaultsParams param,
     std::string values,
     std::string owner) :
+        mId(id),
         mParam(param),
         mType(type),
         mValues(values),
@@ -80,3 +82,15 @@ std::string DefaultsData::GetTypeToFile()
     return ss.str();
 }
 
+
+std::string DefaultsData::GetCommentAsString()
+{
+    std::stringstream ss;
+    
+    for (std::string line : mComment)
+    {
+        ss << line << "\n";
+    }
+    
+    return ss.str();
+}

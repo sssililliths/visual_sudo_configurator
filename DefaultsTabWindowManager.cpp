@@ -24,11 +24,21 @@ void MainWindow::PrepareDefaultsTab(GtkWidget* notebook)
     
     gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewDefaults),
                                                -1,      
+                                               "Id",  
+                                               renderer,
+                                               "text", 
+                                               DefaultsCols::COL_ID,
+                                               NULL);  
+    
+    renderer = gtk_cell_renderer_text_new ();    
+    gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewDefaults),
+                                               -1,      
                                                "Type",  
                                                renderer,
                                                "text", 
                                                DefaultsCols::COL_TYPE,
                                                NULL);  
+    
     renderer = gtk_cell_renderer_text_new ();    
     gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewDefaults),
                                                -1,      
@@ -37,6 +47,7 @@ void MainWindow::PrepareDefaultsTab(GtkWidget* notebook)
                                                "text", 
                                                DefaultsCols::COL_OWNER,
                                                NULL);
+    
     renderer = gtk_cell_renderer_text_new ();
     gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewDefaults),
                                                -1,      
@@ -45,6 +56,7 @@ void MainWindow::PrepareDefaultsTab(GtkWidget* notebook)
                                                "text", 
                                                DefaultsCols::COL_PARAM,
                                                NULL);
+    
     renderer = gtk_cell_renderer_text_new ();
     gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewDefaults),
                                                -1,      
@@ -55,6 +67,7 @@ void MainWindow::PrepareDefaultsTab(GtkWidget* notebook)
                                                NULL);   
 }
 
+//------------------------------------------------------------------------------
 
 void MainWindow::PrepareDefaults()
 {
@@ -62,11 +75,13 @@ void MainWindow::PrepareDefaults()
     GtkTreeIter iter;
     
     GtkListStore* store = gtk_list_store_new(
-                                            4, 
+                                            5, 
+                                            G_TYPE_STRING,
                                             G_TYPE_STRING, 
                                             G_TYPE_STRING,
                                             G_TYPE_STRING, 
                                             G_TYPE_STRING);
+    
     for (DefaultsData* elem : DataManager::getInstance()->GetDefaultses())
     {
         gtk_list_store_append(store, &iter);
@@ -75,8 +90,11 @@ void MainWindow::PrepareDefaults()
         std::string owner = elem->GetOwner();
         std::string param = g_DefaultsParamNames[static_cast<int>(elem->GetParam())];
         std::string val  = elem->GetValuesString();
+        std::stringstream ss;
+        ss << elem->mId;
         
         gtk_list_store_set (store, &iter,
+                      DefaultsCols::COL_ID, ss.str().c_str(),
                       DefaultsCols::COL_TYPE, type.c_str(),
                       DefaultsCols::COL_OWNER, owner.c_str(),
                       DefaultsCols::COL_PARAM, param.c_str(),

@@ -13,12 +13,17 @@
 #include <gtk/gtk.h>
 #include "AliasEditWindow.h"
 #include "MainWindow.h"
+#include "WindowInterface.h"
 
 
 AliasEditWindow* AliasEditWindow::mInstance = 0;
 
+//------------------------------------------------------------------------------
+
 const char *aliasTypes[] = { "USER", "RUNAS", "HOST", "CMDS"};
     
+//------------------------------------------------------------------------------
+
 bool haveLetter(char *str) 
 { 
     int i = 0; 
@@ -35,6 +40,8 @@ bool haveLetter(char *str)
     } 
     return false; 
 } 
+
+//------------------------------------------------------------------------------
 
 std::list<std::string> getTreeviewData(GtkTreeModel* model)
 {    
@@ -58,12 +65,15 @@ std::list<std::string> getTreeviewData(GtkTreeModel* model)
     return result;
 }
 
+//------------------------------------------------------------------------------
 
 void OnCloseWindow()
 {
     gtk_widget_destroy (AliasEditWindow::getInstance()->mWindow);
     MainWindow::getInstance()->ShowData();
 }
+
+//------------------------------------------------------------------------------
 
 void OnSaveData(GtkWidget *btn, gpointer user_data)
 {
@@ -78,29 +88,47 @@ void OnSaveData(GtkWidget *btn, gpointer user_data)
         }
     }
     
+    std::stringstream ss;
+    GtkWidget* txtId  = GTK_WIDGET(gtk_builder_get_object(AliasEditWindow::getInstance()->mBuilder, "txtId"));    
+    ss << gtk_entry_get_text (GTK_ENTRY(txtId));
+    unsigned id;
+    ss >> id;
+    
     GtkWidget* txtName  = GTK_WIDGET(gtk_builder_get_object(AliasEditWindow::getInstance()->mBuilder, "txtName"));    
     const gchar* name = gtk_entry_get_text (GTK_ENTRY(txtName));
     
-    GtkWidget* txtComment  = GTK_WIDGET(gtk_builder_get_object(AliasEditWindow::getInstance()->mBuilder, "txtComment"));    
-    const gchar* comment = gtk_entry_get_text (GTK_ENTRY(txtComment));
+    GtkWidget* txtComment  = GTK_WIDGET(gtk_builder_get_object(AliasEditWindow::getInstance()->mBuilder, "txtComment"));            
+    GtkTextBuffer * buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(txtComment));
+    GtkTextIter start, end;
+    gtk_text_buffer_get_start_iter(buf, &start);
+    gtk_text_buffer_get_end_iter(buf, &end);
+    const gchar* comment = gtk_text_buffer_get_text (buf, &start, &end, true);
     
     GtkWidget* trvCmds  = GTK_WIDGET(gtk_builder_get_object(AliasEditWindow::getInstance()->mBuilder, "trvCmds"));
     std::list<std::string> valueList = getTreeviewData(gtk_tree_view_get_model(GTK_TREE_VIEW(trvCmds)));
+    
+    bool valid = AliasEditWindow::getInstance()->CheckValidChars(AliasCols::COL_NAME, name);
+    
+    for(std::string element : valueList)
+    {
+        valid &= AliasEditWindow::getInstance()->CheckValidChars(AliasCols::COL_VALUE, element);
+    }
+    if(!valid) return;
     
     if (activeType && name && !valueList.empty())
     {
         bool* edit = static_cast<bool*>(user_data);
         if(*edit)
         {
-            DataManager::getInstance()->ModifyAlias(std::string(name), type, valueList);
+            DataManager::getInstance()->ModifyAlias(id, std::string(name), type, valueList);
             *edit = false;
         }
         else
         {
-            DataManager::getInstance()->AddAlias(std::string(name), type, valueList);
+            DataManager::getInstance()->AddAlias(std::string(name), type, valueList, false);
         }
         
-        DataManager::getInstance()->SetAliasComment(name, comment);
+        DataManager::getInstance()->SetAliasComment((*edit) ? id : DataManager::getInstance()->GetAliasId()-1, comment, false);;
     }
     else
     {
@@ -110,6 +138,8 @@ void OnSaveData(GtkWidget *btn, gpointer user_data)
     gtk_widget_destroy (AliasEditWindow::getInstance()->mWindow);
     MainWindow::getInstance()->ShowData();
 }
+
+//------------------------------------------------------------------------------
 
 void OnAddCmd()
 {
@@ -145,6 +175,8 @@ void OnAddCmd()
     }
 }
 
+//------------------------------------------------------------------------------
+
 void OnRemoveCmd()
 {
     GtkWidget* trvCmds  = GTK_WIDGET(gtk_builder_get_object(AliasEditWindow::getInstance()->mBuilder, "trvCmds"));
@@ -163,6 +195,7 @@ void OnRemoveCmd()
     }
 }
 
+//------------------------------------------------------------------------------
 
 void OnClickBtnAddAlias(GtkWidget *btn, gpointer user_data)
 {        
@@ -175,12 +208,13 @@ void OnClickBtnAddAlias(GtkWidget *btn, gpointer user_data)
     gtk_main();
 }
 
+//------------------------------------------------------------------------------
 
 void OnClickBtnModifyAlias(GtkWidget *btn, gpointer user_data)
 {        
         GtkTreeIter iter;
         GtkTreeModel* model;
-        std::string result = "";
+        unsigned result;
         GtkTreeSelection* selection = gtk_tree_view_get_selection(static_cast<GtkTreeView*>(user_data));
         gboolean isSelected = gtk_tree_selection_get_selected (selection,
                                      &model,
@@ -189,30 +223,35 @@ void OnClickBtnModifyAlias(GtkWidget *btn, gpointer user_data)
         {
             gchar* data;
             gtk_tree_model_get (model, &iter,
-                           AliasCols::COL_NAME, &data,
+                           AliasCols::COL_ID, &data,
                            -1);
 
             std::stringstream ss;
             ss << data;
-            result = ss.str();
+            ss >> result;
+            
+            AliasEditWindow::getInstance()->PrepareEditWindow(); 
+            AliasEditWindow::getInstance()->SetValues(result);
         }
-        
-    AliasEditWindow::getInstance()->PrepareEditWindow(); 
-    AliasEditWindow::getInstance()->SetValues(result);
-    
+            
     
     gtk_widget_show( AliasEditWindow::getInstance()->mWindow );
     gtk_main();
 }
 
+//------------------------------------------------------------------------------
 
 AliasEditWindow::AliasEditWindow() : mEdit (false)
 {
 }
 
+//------------------------------------------------------------------------------
+
 AliasEditWindow::~AliasEditWindow()
 {
 }
+
+//------------------------------------------------------------------------------
 
 AliasEditWindow* AliasEditWindow::getInstance()
 {
@@ -223,6 +262,8 @@ AliasEditWindow* AliasEditWindow::getInstance()
 
     return mInstance;
 }
+
+//------------------------------------------------------------------------------
 
 void AliasEditWindow::ConnectEvents()
 {
@@ -241,10 +282,18 @@ void AliasEditWindow::ConnectEvents()
     g_signal_connect (btnSave, "clicked", G_CALLBACK (OnSaveData), &mEdit);
 }
 
+//------------------------------------------------------------------------------
 
-bool AliasEditWindow::SetValues(std::string aliasName)
+bool AliasEditWindow::SetValues(unsigned id)
 {
-    AliasData* currAlias = DataManager::getInstance()->GetAlias(aliasName);
+    AliasData* currAlias = DataManager::getInstance()->GetAlias(id);
+    
+    std::stringstream ss;    
+    GtkWidget* txtId  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "txtId")); 
+    ss << id;
+    std::string idv = ss.str();
+    gtk_entry_set_text (GTK_ENTRY(txtId), idv.c_str());
+    
     GtkWidget* cmbType  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "cmbType"));
     gtk_combo_box_set_active (GTK_COMBO_BOX(cmbType), static_cast<int>(currAlias->GetType()));
     
@@ -255,7 +304,7 @@ bool AliasEditWindow::SetValues(std::string aliasName)
     
     GtkWidget* txtComment  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "txtComment"));    
     
-    std::string comment = currAlias->GetComment();
+    std::string comment = currAlias->GetCommentAsString();
     gtk_entry_set_text (GTK_ENTRY(txtComment), comment.c_str());
     
     GtkWidget* trvCmds  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "trvCmds"));
@@ -282,14 +331,14 @@ bool AliasEditWindow::SetValues(std::string aliasName)
     mEdit = true;
 }
 
+//------------------------------------------------------------------------------
 
 bool AliasEditWindow::PrepareEditWindow()
 {
     mBuilder = gtk_builder_new ();
-    std::string filename = "./aliasWindow.glade";     
     GError *error = NULL;
 
-    if (mBuilder && gtk_builder_add_from_file (mBuilder, filename.c_str(), &error) == 0)
+    if (mBuilder && gtk_builder_add_from_string (mBuilder, gAliasWindow.c_str(), gAliasWindow.length(), &error) == 0)
     {
         g_printerr ("Error loading file: %s\n", error->message);
         g_clear_error (&error);
@@ -304,6 +353,65 @@ bool AliasEditWindow::PrepareEditWindow()
   	gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (cmbType), aliasTypes[i]);
     }
     ConnectEvents();
+    
+    return true;
+}
+
+
+bool AliasEditWindow::CheckValidChars(AliasCols elemType, std::string element)
+{
+    std::string wrongChars = "";
+    switch(elemType)
+    {
+    case AliasCols::COL_NAME:
+    {
+        if(element.find('.') != std::string::npos)
+        {
+            wrongChars.append(". ");
+        }
+    }
+    case AliasCols::COL_VALUE:
+    {
+        if(element.find(';') != std::string::npos)
+        {
+            wrongChars.append("; ");
+        }
+        if(element.find(',') != std::string::npos)
+        {
+            wrongChars.append(", ");
+        }
+        if(element.find('#') != std::string::npos)
+        {
+            wrongChars.append("# ");
+        }
+        if(element.find(' ') != std::string::npos)
+        {
+            wrongChars.append("space ");
+        }
+        break;
+    }    
+    }
+    
+    if(!wrongChars.empty())
+    {
+        std::string message = "Found wrong characters at element: " 
+                              + element 
+                              + "\n "
+                              + wrongChars;
+        
+        GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
+        GtkWidget *errorDialog = gtk_message_dialog_new (
+                                    GTK_WINDOW(MainWindow::getInstance()->GetWindow()),
+                                    flags,
+                                    GTK_MESSAGE_ERROR,
+                                    GTK_BUTTONS_CLOSE,
+                                    message.c_str());                    
+        gtk_window_set_title(GTK_WINDOW(errorDialog), "Wrong characters");
+        gtk_dialog_run (GTK_DIALOG (errorDialog));
+        gtk_widget_destroy (errorDialog);
+        
+        return false;
+    }
     
     return true;
 }

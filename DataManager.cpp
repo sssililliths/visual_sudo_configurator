@@ -16,14 +16,46 @@
 
 DataManager* DataManager::mInstance = 0;
 
+
+std::list<std::string> Split(std::string str, std::string delim)
+{
+    size_t pos = 0;
+    std::string tmp;
+    std::list<std::string> result;
+    while ((pos = str.find(delim)) != std::string::npos) 
+    {
+        tmp = str.substr(0, pos);
+        str.erase(0, pos + delim.length());
+        if (tmp.empty()) continue;
+        result.push_back(tmp);
+    }
+    
+    if (!str.empty())
+    {
+        result.push_back(str);
+    }
+    
+    return result;
+}
+
+//------------------------------------------------------------------------------
+
 DataManager::DataManager() :
-    mAliases({})
+    mChanged(false)
 {
 }
 
+//------------------------------------------------------------------------------
+
 DataManager::~DataManager()
 {
+    if (mInstance)
+    {
+        mInstance = NULL;
+    }
 }
+
+//------------------------------------------------------------------------------
 
 DataManager* DataManager::getInstance()
 {
@@ -35,16 +67,76 @@ DataManager* DataManager::getInstance()
     return mInstance;
 }
 
+//------------------------------------------------------------------------------
+
+std::string DataManager::GetMainCommentStr()
+{
+    std::stringstream ss;
+    
+    for (std::string line : mMainComment)
+    {
+        ss << line
+           << "\n";
+    }
+    
+    return ss.str();
+}
+
+//------------------------------------------------------------------------------
+
+void DataManager::SetMainComment(std::string val)
+{
+    mMainComment = Split(val, "\n");
+}
+
+/******************************************************************************\
+ *                                 Aliases
+ \*****************************************************************************/
+
+    unsigned DataManager::GetAliasId()
+    {
+        if (mAliases.empty())
+        {
+            return 1;
+        }
+        else
+        {
+            return mAliases.back()->mId+1;
+        }
+    }
+
+//------------------------------------------------------------------------------
+
     void DataManager::AddAlias(
         std::string name, 
         AliasType type, 
-        std::list<std::string> values)
+        std::list<std::string> values,
+        bool fromParser = false)
     {
-        AliasData* newAlias = new AliasData(name, type, values);
+        mChanged = !fromParser;
+        AliasData* newAlias = new AliasData(GetAliasId(), name, type, values);
         mAliases.push_back(newAlias);
     }
+   
+//------------------------------------------------------------------------------   
     
-    AliasData* DataManager::GetAlias(std::string name)
+    AliasData* DataManager::GetAlias(unsigned id)
+    {
+        std::list<AliasData*>  typeAliases = {};
+        for (AliasData* elem : mAliases)
+        {
+            if (elem->mId == id)
+            {
+                return elem;
+            }
+        }
+        
+        return NULL;
+    }
+   
+//------------------------------------------------------------------------------   
+    
+    AliasData* DataManager::GetAliasByName(std::string name)
     {
         std::list<AliasData*>  typeAliases = {};
         for (AliasData* elem : mAliases)
@@ -57,27 +149,28 @@ DataManager* DataManager::getInstance()
         
         return NULL;
     }
-    
-    std::list<AliasData*> DataManager::GetAliasesByValue(std::string value)
-    {
-        // todo find aliases by val and return it
-        return mAliases;
-    }
+        
+//------------------------------------------------------------------------------
     
     std::list<AliasData*> DataManager::GetAliases()
     {
         return mAliases;
     }
     
+//------------------------------------------------------------------------------
+    
     void DataManager::ModifyAlias(
+        unsigned id,
         std::string name, 
         AliasType type, 
         std::list<std::string> values)
     {
         for (AliasData* elem : mAliases)
         {
-            if (elem->GetName() == name)
+            if (elem->mId == id)
             {
+                mChanged = true;
+                elem->SetName(name);
                 elem->SetType(type);
                 elem->SetValues(values);
                 return;
@@ -85,39 +178,69 @@ DataManager* DataManager::getInstance()
         }
     }
     
-    void DataManager::SetAliasComment(std::string name, std::string comment)
+//------------------------------------------------------------------------------
+    
+    void DataManager::SetAliasComment(
+                                unsigned id, 
+                                std::string comment, 
+                                bool fromParser)
     {
         for (AliasData* elem : mAliases)
         {
-            if (elem->GetName() == name)
+            if (elem->mId == id)
             {
-                elem->SetComment(comment);
+                mChanged = !fromParser;
+                elem->SetComment(Split(comment, "\n"));
                 return;
             }
         }
     }
     
-    void DataManager::RemoveAlias(std::string name)
+//------------------------------------------------------------------------------
+    
+    void DataManager::RemoveAlias(unsigned id)
     {
         for (AliasData* elem : mAliases)
         {
-            if (elem->GetName() == name)
+            if (elem->mId == id)
             {
+                mChanged = true;
                 mAliases.remove(elem);
                 return;
             }
         }
     }
     
+    
+/******************************************************************************\
+ *                                 Users
+ \*****************************************************************************/
+    
+    unsigned DataManager::GetUserId()
+    {
+        if (mUsers.empty())
+        {
+            return 1;
+        }
+        else
+        {
+            return mUsers.back()->mId+1;
+        }
+    }
+
+//------------------------------------------------------------------------------
+    
     void DataManager::AddUser(
         std::string name, 
         std::string location, 
         std::string runas, 
         std::list<std::string> cmds,
+        bool fromParser,
         bool isGroup,
         bool isSystemGroup)
     {
         UserData* newUser = new UserData(
+                                        GetUserId(),
                                         name, 
                                         location, 
                                         runas,
@@ -131,14 +254,17 @@ DataManager* DataManager::getInstance()
             newUser->SetAsGroup();
         }
         
+        mChanged = !fromParser;
         mUsers.push_back(newUser);
     }
     
-    UserData* DataManager::GetUser(std::string name)
+//------------------------------------------------------------------------------
+    
+    UserData* DataManager::GetUser(unsigned id)
     {
         for (UserData* elem : mUsers)
         {
-            if (elem->GetName() == name)
+            if (elem->mId == id)
             {
                 return elem;
             }
@@ -147,13 +273,17 @@ DataManager* DataManager::getInstance()
         return NULL;
     }
     
+//------------------------------------------------------------------------------
+    
     std::list<UserData*> DataManager::GetUsers()
     {
         return mUsers;
     }
 
+//------------------------------------------------------------------------------
     
     void DataManager::ModifyUser(
+        unsigned id,
         std::string name, 
         std::string location, 
         std::string runas, 
@@ -161,8 +291,10 @@ DataManager* DataManager::getInstance()
     {        
         for (UserData* elem : mUsers)
         {
-            if (elem->GetName() == name)
+            if (elem->mId == id)
             {
+                mChanged = true;
+                elem->SetName(name);
                 elem->SetLocation(location);
                 elem->SetRunas(runas);
                 elem->SetCmdsString(cmds);
@@ -171,36 +303,64 @@ DataManager* DataManager::getInstance()
         }
     }
     
-    void DataManager::RemoveUser(std::string name)
+//------------------------------------------------------------------------------
+    
+    void DataManager::RemoveUser(unsigned id)
     {
         for (UserData* elem : mUsers)
         {
-            if (elem->GetName() == name)
+            if (elem->mId == id)
             {
+                mChanged = true;
                 mUsers.remove(elem);
                 return;
             }
         }
     }            
     
-    void DataManager::SetUserComment(std::string name, std::string comment)
+//------------------------------------------------------------------------------
+    
+    void DataManager::SetUserComment(
+                                unsigned id, 
+                                std::string comment,
+                                bool fromParser)
     {
         for (UserData* elem : mUsers)
         {
-            if (elem->GetName() == name)
+            if (elem->mId == id)
             {
-                elem->SetComment(comment);
+                mChanged = !fromParser;
+                elem->SetComment(Split(comment, "\n"));
                 return;
             }
         }
     }
     
     
+/******************************************************************************\
+ *                                 Defaults
+ \*****************************************************************************/
+    
+    unsigned DataManager::GetDefaultsId()
+    {
+        if (mDefaults.empty())
+        {
+            return 1;
+        }
+        else
+        {
+            return mDefaults.back()->mId+1;
+        }
+    }
+
+//------------------------------------------------------------------------------
+    
     void DataManager::AddDefaults(
         DefaultsType type, 
         std::string owner,
         std::string param,
-        std::string values)
+        std::string values,
+        bool fromParser)
     {
         DefaultsData* defaults = NULL;
         DefaultsParams params;
@@ -213,16 +373,18 @@ DataManager* DataManager::getInstance()
             }
         }
         
-        defaults = new DefaultsData(type, params, values, owner);
+        mChanged = !fromParser;
+        defaults = new DefaultsData(GetDefaultsId(), type, params, values, owner);
         mDefaults.push_back(defaults);
     }
+  
+//------------------------------------------------------------------------------  
     
-    
-    DefaultsData* DataManager::GetDefaults(DefaultsType type, DefaultsParams param)
+    DefaultsData* DataManager::GetDefaults(unsigned id)
     {
         for(DefaultsData* elem : mDefaults)
         {
-            if (elem->GetType() == type && elem->GetParam() == param)
+            if (elem->mId == id)
             {
                 return elem;
             }
@@ -231,12 +393,15 @@ DataManager* DataManager::getInstance()
         return NULL;
     }
     
+//------------------------------------------------------------------------------
+    
     std::list<DefaultsData*> DataManager::GetDefaultses()
     {
         return mDefaults;
     }
     
     void DataManager::ModifyDefaults(
+        unsigned id,
         DefaultsType type, 
         std::string owner,
         DefaultsParams param,
@@ -244,23 +409,45 @@ DataManager* DataManager::getInstance()
     {
         for(DefaultsData* elem : mDefaults)
         {
-            if (elem->GetType() == type && elem->GetParam() == param)
+            if (elem->mId == id)
             {
+                mChanged = true;
+                elem->SetType(type);
                 elem->SetOwner(owner);
+                elem->SetParam(param);
                 elem->SetValues(values);
             }
         }
     }
     
-    void DataManager::RemoveDefaults(DefaultsType type, DefaultsParams param, std::string owner)
+//------------------------------------------------------------------------------
+    
+    void DataManager::RemoveDefaults(unsigned id)
     {
         for (DefaultsData* elem : mDefaults)
         {
-            if (elem->GetType() == type &&
-                elem->GetParam() == param &&
-                elem->GetOwner() == owner)
+            if (elem->mId == id)
             {
                 mDefaults.remove(elem);
+                mChanged = true;
+                return;
+            }
+        }
+    } 
+    
+//------------------------------------------------------------------------------
+    
+    void DataManager::SetDefaultsComment(
+                                unsigned id, 
+                                std::string comment,
+                                bool fromParser)
+    {
+        for (DefaultsData* elem : mDefaults)
+        {
+            if (elem->mId == id)
+            {
+                mChanged = !fromParser;
+                elem->SetComment(Split(comment, "\n"));
                 return;
             }
         }

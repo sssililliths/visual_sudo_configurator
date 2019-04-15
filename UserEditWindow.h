@@ -36,7 +36,8 @@ public:
     void ShowWindow();
     void ShowData();
     bool PrepareEditWindow();
-    bool SetValues(std::string aliasName);
+    bool SetValues(unsigned id);
+    bool CheckValidChars(UserCols elemType, std::string element);
     
 private:
     static UserEditWindow* mInstance; 

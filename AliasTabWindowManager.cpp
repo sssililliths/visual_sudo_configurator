@@ -12,6 +12,7 @@
 
 #include <string>
 #include <gtk/gtk.h>
+#include <glib-2.0/gobject/glib-types.h>
 #include "MainWindow.h"
 
 
@@ -21,10 +22,16 @@ void MainWindow::PrepareAliasTab(GtkWidget* notebook)
     // aliasName, aliasType, aliasValues
     GtkWidget* treeViewAlias   = GTK_WIDGET(gtk_builder_get_object(mBuilder, "trvAliasData"));
     GtkCellRenderer* renderer = gtk_cell_renderer_text_new ();
-    GtkTreeViewColumn* columnATypes = gtk_tree_view_column_new_with_attributes(
-                                                                        "Type", // column title
-                                                                        renderer, // GtkCellRenderer
-                                                                        NULL); // end of list  
+    
+    gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewAlias),
+                                               -1,      
+                                               "Id",  
+                                               renderer,
+                                               "text", 
+                                               AliasCols::COL_ID,
+                                               NULL);  
+    
+    renderer = gtk_cell_renderer_text_new ();    
     gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewAlias),
                                                -1,      
                                                "Type",  
@@ -32,6 +39,7 @@ void MainWindow::PrepareAliasTab(GtkWidget* notebook)
                                                "text", 
                                                AliasCols::COL_TYPE,
                                                NULL);  
+    
     renderer = gtk_cell_renderer_text_new ();    
     gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewAlias),
                                                -1,      
@@ -40,6 +48,7 @@ void MainWindow::PrepareAliasTab(GtkWidget* notebook)
                                                "text", 
                                                AliasCols::COL_NAME,
                                                NULL);
+    
     renderer = gtk_cell_renderer_text_new ();
     gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewAlias),
                                                -1,      
@@ -50,6 +59,7 @@ void MainWindow::PrepareAliasTab(GtkWidget* notebook)
                                                NULL);   
 }
 
+//------------------------------------------------------------------------------
 
 void MainWindow::PrepareAliases()
 {
@@ -57,19 +67,23 @@ void MainWindow::PrepareAliases()
     GtkTreeIter iter;
     
     GtkListStore* store = gtk_list_store_new(
-                                            3, 
+                                            4, 
+                                            G_TYPE_STRING,
                                             G_TYPE_STRING, 
                                             G_TYPE_STRING, 
                                             G_TYPE_STRING);
-    for (AliasData* elem : DataManager::getInstance()->GetAliasesByValue(""))
+    for (AliasData* elem : DataManager::getInstance()->GetAliases())
     {
         gtk_list_store_append(store, &iter);
         
         std::string type = elem->GetTypeString();
         std::string name = elem->GetName();
         std::string val  = elem->GetValuesString();
+        std::stringstream ss;
+        ss << elem->mId;
         
         gtk_list_store_set (store, &iter,
+                      AliasCols::COL_ID, ss.str().c_str(),
                       AliasCols::COL_TYPE, type.c_str(),
                       AliasCols::COL_NAME, name.c_str(),
                       AliasCols::COL_VALUE, val.c_str(),

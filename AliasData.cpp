@@ -14,9 +14,11 @@
 #include <sstream>
 
 AliasData::AliasData(
+    const unsigned id,
     std::string name, 
     AliasType type, 
     std::list<std::string> values) :
+        mId(id),
         mName(name),
         mType(type),
         mValues(values)
@@ -25,6 +27,7 @@ AliasData::AliasData(
 
 AliasData::~AliasData()
 {
+    mValues.clear();
 }
 
 std::string AliasData::GetValuesString()
@@ -84,6 +87,19 @@ std::string AliasData::GetTypeToFile()
     case AliasType::CMDS_ALIAS:
         ss << "Cmds_Alias";
         break;
+    }
+    
+    return ss.str();
+}
+
+
+std::string AliasData::GetCommentAsString()
+{
+    std::stringstream ss;
+    
+    for (std::string line : mComment)
+    {
+        ss << line << "\n";
     }
     
     return ss.str();

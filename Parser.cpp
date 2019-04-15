@@ -19,10 +19,15 @@
 
 Parser* Parser::mInstance = 0;
 
+//------------------------------------------------------------------------------
+
 Parser::Parser() :
     mLastUser(NULL),
-    mLastAlias(NULL)
+    mLastAlias(NULL),
+    mMainComment("")
 {}
+
+//------------------------------------------------------------------------------
 
 Parser* Parser::getInstance()
 {
@@ -34,9 +39,12 @@ Parser* Parser::getInstance()
     return mInstance;
 }
 
-void Parser::ParseLine(std::string line)
+//------------------------------------------------------------------------------
+
+std::string Parser::ParseLine(std::string line, unsigned cnt)
 {
-    if (line.empty()) return;
+    std::string error = "";
+    if (line.empty()) return "";
     DataManager* dm = DataManager::getInstance();
     
     std::vector<std::string> lineData = Split(line);
@@ -46,46 +54,71 @@ void Parser::ParseLine(std::string line)
         ParseAlias(lineData);
         mLastParsedType = LastElement::LINE_ALIAS;
     } 
-    else if (lineData[0][0] == '%' || 
-            (dm->GetAlias(lineData[0]) != NULL && dm->GetAlias(lineData[0])->GetType() == AliasType::USER_ALIAS)) // groups
-    {
-        ParseUser<true>(lineData);
-        mLastParsedType = LastElement::LINE_USER;
-    }
     else if (ToLower(lineData[0]).find("defaults") == 0)
     {
         ParseDefaults(lineData);
+        mLastParsedType = LastElement::LINE_DEFAULTS;
     }
     else if (lineData[0][0] == '#')
     {
-        std::stringstream ss;
-        for (std::string word : lineData)
-            ss << word << " ";
-        std::string tmp = ss.str();
-        tmp = tmp.substr (1,tmp.length()-1);
-        if (tmp[0] == ' ')
+        if(ToLower(lineData[0]).find("includedir") != std::string::npos)
         {
+            DataManager::getInstance()->AppendIncludedir(lineData[1]);
+        }
+        else if(ToLower(lineData[0]).find("include") != std::string::npos)
+        {
+            DataManager::getInstance()->AppendInclude(lineData[1]);
+        }
+        else // comment
+        {
+            std::stringstream ss;
+            for (std::string word : lineData)
+                ss << word << " ";
+            std::string tmp = ss.str();
             tmp = tmp.substr (1,tmp.length()-1);
+            if (tmp[0] == ' ')
+            {
+                tmp = tmp.substr (1,tmp.length()-1);
+            }
+
+            if (mLastParsedType == LastElement::LINE_ALIAS)
+            {
+                if (mLastAlias)
+                    mLastAlias->AppendComment(tmp);
+            }
+            else if (mLastParsedType == LastElement::LINE_USER)
+            {
+                if (mLastUser)
+                    mLastUser->AppendComment(tmp);
+            }
+            else if (mLastParsedType == LastElement::LINE_DEFAULTS)
+            {
+                if (mLastDefaults)
+                    mLastDefaults->AppendComment(tmp);
+            }
+            else
+            {
+                DataManager::getInstance()->AppendMainComment(tmp);
+            }
         }
-        
-        if (mLastParsedType == LastElement::LINE_ALIAS)
-        {
-            if (mLastAlias)
-                mLastAlias->SetComment(tmp);
-        }
-        else
-        {
-            if (mLastUser)
-                mLastUser->SetComment(tmp);
-        }
+    }
+    else if (lineData[0][0] == '%' || 
+            (dm->GetAliasByName(lineData[0]) != NULL && 
+                (dm->GetAliasByName(lineData[0])->GetType() == AliasType::USER_ALIAS))) // groups
+    {
+        error = ParseUser<true>(lineData, cnt);
+        mLastParsedType = LastElement::LINE_USER;
     }
     else
     {
-        ParseUser<false>(lineData);
+        error = ParseUser<false>(lineData, cnt);
         mLastParsedType = LastElement::LINE_USER;
-    }    
+    } 
+    
+    return error;
 }
 
+//------------------------------------------------------------------------------
 
 void Parser::ParseDefaults(std::vector<std::string> defaultData)
 {
@@ -155,18 +188,48 @@ void Parser::ParseDefaults(std::vector<std::string> defaultData)
     }
     currElem++;
     
+    bool hasComment = false;
     for(int i = currElem; i < defaultData.size(); i++)
     {
+        if (defaultData[i][0] == '#')
+        {
+            hasComment = true;
+            currElem = i;
+            break;
+        }
         values += " " + defaultData[i];
     }
     
-    DataManager::getInstance()->AddDefaults(type, owner, param, values);
+    DataManager::getInstance()->AddDefaults(type, owner, param, values, true);
+    mLastDefaults = DataManager::getInstance()->GetLastDefaults();
+    
+    if (hasComment)
+    {
+        for(int i = currElem; i < defaultData.size(); i++)
+        {
+            std::string tmp = defaultData[i];
+            mLastUser->AppendComment(tmp);
+        }
+    }
 }
 
+//------------------------------------------------------------------------------
 
 template<bool isGroup>
-void Parser::ParseUser(std::vector<std::string> userData)
+std::string Parser::ParseUser(std::vector<std::string> userData, unsigned line)
 {
+    
+    if(userData.size() < 2) // minimal size of user
+    {
+        std::stringstream ss;
+        
+        ss << "Parsing error: Line " 
+           << line 
+           << ":\n" 
+           << userData[0];
+        return ss.str();
+    }
+    
     /*
      * group_name location=(optional_as) cmds
      *    [0]            [1]             [2+]
@@ -186,7 +249,11 @@ void Parser::ParseUser(std::vector<std::string> userData)
     {
         if(isSystemGroup)
         {
-            userData[currentElement].substr(1, userData[currentElement].size()); // we don't need to have this symbol in name
+            userData[currentElement].erase(
+                                std::find(
+                                    userData[currentElement].begin(), 
+                                    userData[currentElement].end(), 
+                                    '%')); // we don't need to have this symbol in name
         }    
     }
     
@@ -253,6 +320,8 @@ void Parser::ParseUser(std::vector<std::string> userData)
         // currentElement may be different, but we have only commands
     }
     
+    bool hasComment = false;
+    
     // iterate commands and add to vec
     for(int i = currentElement; i < userData.size(); i++)
     {
@@ -261,19 +330,39 @@ void Parser::ParseUser(std::vector<std::string> userData)
         {
             tmp = tmp.substr(0, tmp.length()-1);
         }
+        if (tmp[0] == '#')
+        {
+            hasComment = true;
+            currentElement = i;
+            break;
+        }
         cmds.push_back(tmp);
     }
     
-    DataManager::getInstance()->AddUser(name, location, runAs, cmds, isGroup, isSystemGroup);
-    mLastUser = DataManager::getInstance()->GetUser(name);
+    DataManager::getInstance()->AddUser(name, location, runAs, cmds, true, isGroup, isSystemGroup);
+    mLastUser = DataManager::getInstance()->GetLastUser();
+    
+    if (hasComment)
+    {
+        for(int i = currentElement; i < userData.size(); i++)
+        {
+            std::string tmp = userData[i];
+            mLastUser->AppendComment(tmp);
+        }
+    }
+    
+    return "";
 }
 
+//------------------------------------------------------------------------------
 
 void Parser::ParseAlias(std::vector<std::string> aliasData)
 {
     AliasType aliasType = GetAliasType(aliasData[0]);
     std::string aliasName = aliasData[1];
     std::list<std::string> aliasValues = {};
+    unsigned currentElement = 0;
+    bool hasComment = false;
     
     for (int i = 3; i < aliasData.size(); i++)
     {
@@ -282,13 +371,29 @@ void Parser::ParseAlias(std::vector<std::string> aliasData)
         {
             tmp = tmp.substr(0, tmp.length()-1);
         }
+        if (tmp[0] == '#')
+        {
+            hasComment = true;
+            currentElement = i;
+            break;
+        }
         aliasValues.push_back(tmp);
     }
     
-    DataManager::getInstance()->AddAlias(aliasName, aliasType, aliasValues);
-    mLastAlias = DataManager::getInstance()->GetAlias(aliasName);
+    DataManager::getInstance()->AddAlias(aliasName, aliasType, aliasValues, true);
+    mLastAlias = DataManager::getInstance()->GetLastAlias();
+    
+    if (hasComment)
+    {
+        for(int i = currentElement; i < aliasData.size(); i++)
+        {
+            std::string tmp = aliasData[i];
+            mLastUser->AppendComment(tmp);
+        }
+    }
 }
 
+//------------------------------------------------------------------------------
 
 AliasType Parser::GetAliasType(std::string str)
 {
@@ -311,6 +416,7 @@ AliasType Parser::GetAliasType(std::string str)
     }
 }
 
+//------------------------------------------------------------------------------
 
 DefaultsType Parser::GetDefaultsType(std::string str)
 {
@@ -333,6 +439,7 @@ DefaultsType Parser::GetDefaultsType(std::string str)
     }
 }
 
+//------------------------------------------------------------------------------
 
 std::string Parser::ToLower(std::string str)
 {
@@ -352,6 +459,7 @@ std::string Parser::ToLower(std::string str)
     return ss.str();
 }
 
+//------------------------------------------------------------------------------
 
 std::vector<std::string> Parser::Split(std::string str, std::string delim)
 {
@@ -374,10 +482,35 @@ std::vector<std::string> Parser::Split(std::string str, std::string delim)
     return result;
 }
 
+//------------------------------------------------------------------------------
 
     std::string Parser::PrepareToSave()
     {
         std::stringstream ss;
+                
+        for(std::string line : DataManager::getInstance()->GetMainComment())
+        {
+            ss << "# "
+               << line
+               << std::endl;
+        }
+        
+        ss << std::endl;
+        
+        for (std::string includedir : DataManager::getInstance()->GetIncludedirs())
+        {
+            ss << "#includedir "
+               << includedir
+               << std::endl;
+        }
+        for(std::string include : DataManager::getInstance()->GetIncludes())
+        {
+            ss << "#include "
+               << include
+               << std::endl;
+        }
+        
+        ss << std::endl;
         
         for (DefaultsData* defaults : DataManager::getInstance()->GetDefaultses())
         {
@@ -389,7 +522,17 @@ std::vector<std::string> Parser::Split(std::string str, std::string delim)
             {
                 ss << "=" << defaults->GetValues();
             }
+            
             ss << std::endl;
+            
+            if (!defaults->GetComment().empty())
+            {
+                for(std::string line : defaults->GetComment())
+                {
+                    ss << "# " << line << std::endl;
+                }
+                ss << std::endl;
+            }
         }
         
         ss << std::endl << std::endl;
@@ -402,8 +545,11 @@ std::vector<std::string> Parser::Split(std::string str, std::string delim)
             
             if (!alias->GetComment().empty())
             {
-                ss << "# " << alias->GetComment() << std::endl
-                        << std::endl;
+                for(std::string line : alias->GetComment())
+                {
+                    ss << "# " << line << std::endl;
+                }
+                ss << std::endl;
             }
         }
         
@@ -411,6 +557,11 @@ std::vector<std::string> Parser::Split(std::string str, std::string delim)
         
         for (UserData* user : DataManager::getInstance()->GetUsers())
         {
+            if(user->IsSysGroup())
+            {
+                ss << "%";
+            }
+            
             ss << user->GetName() << " "
                << user->GetLocation() << "=";
             
@@ -428,8 +579,12 @@ std::vector<std::string> Parser::Split(std::string str, std::string delim)
             
             if (!user->GetComment().empty())
             {
-                ss << "# " << user->GetComment() << std::endl 
-                        << std::endl;
+                for (std::string line : user->GetComment())
+                {
+                    ss << "# " << line << std::endl; 
+                }
+                
+                ss  << std::endl;
             }
         }
         

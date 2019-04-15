@@ -38,6 +38,9 @@ FileManager* FileManager::getInstance()
 
 void FileManager::LoadData()
 {
+    std::fstream fs;
+    std::string error = "";
+        
     GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
     GtkWidget *dialog = gtk_file_chooser_dialog_new ("Open File",
                                       GTK_WINDOW(MainWindow::getInstance()->GetWindow()),
@@ -51,31 +54,60 @@ void FileManager::LoadData()
     if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK)
     {        
         GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
-        std::fstream fs;
         fs.open (gtk_file_chooser_get_filename (chooser), std::fstream::in);
-        
-        if (fs.good())
-        {
-            std::string tmp;
-            if (!mFileData.empty())
-            {
-                mFileData.clear();
-            }
-
-            while (!fs.eof())
-            {
-                getline(fs, tmp);
-                mFileData.append(tmp);
-                Parser::getInstance()->ParseLine(tmp);
-            }
-            fs.close();
-        }
-        else
-        {
-            //todo: error opening file
-        }
     }
     gtk_widget_destroy (dialog);
+        
+    if (fs.good())
+    {
+        std::string tmp;
+        if (!mFileData.empty())
+        {
+            mFileData.clear();
+        }
+
+        unsigned line = 0;
+        while (!fs.eof())
+        {
+            getline(fs, tmp);
+            mFileData.append(tmp);
+            error = Parser::getInstance()->ParseLine(tmp, line++);
+            if (!error.empty())
+            {
+                GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
+                GtkWidget *errorDialog = gtk_message_dialog_new (
+                                    GTK_WINDOW(MainWindow::getInstance()->GetWindow()),
+                                    flags,
+                                    GTK_MESSAGE_ERROR,
+                                    GTK_BUTTONS_CLOSE,
+                                    error.c_str());                    
+                gtk_window_set_title(GTK_WINDOW(errorDialog), "Error");
+                gtk_dialog_run (GTK_DIALOG (errorDialog));
+                gtk_widget_destroy (errorDialog);
+                break;
+            }
+        }
+        fs.close();
+    }
+    else
+    {
+        GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
+        GtkWidget *errorDialog = gtk_message_dialog_new (
+                                    GTK_WINDOW(MainWindow::getInstance()->GetWindow()),
+                                    flags,
+                                    GTK_MESSAGE_ERROR,
+                                    GTK_BUTTONS_CLOSE,
+                                    strerror(errno));                    
+        gtk_window_set_title(GTK_WINDOW(dialog), "Error opening file");
+        gtk_dialog_run (GTK_DIALOG (errorDialog));
+        gtk_widget_destroy (errorDialog);
+    }
+    
+    if (!error.empty())
+    {
+        delete DataManager::getInstance();
+        LoadData();
+    }
 }
 
 

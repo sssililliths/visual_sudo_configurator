@@ -23,13 +23,14 @@ enum class LastElement
     LINE_EMPTY,
     LINE_USER,
     LINE_ALIAS,
+    LINE_DEFAULTS,
     LINE_COMMENT
 };
 
 class Parser {
 public:
     static Parser* getInstance();
-    void ParseLine(std::string line);
+    std::string ParseLine(std::string line, unsigned cnt);
     std::string PrepareToSave();
     
 private:
@@ -43,15 +44,17 @@ private:
     DefaultsType GetDefaultsType(std::string str);
     void ParseAlias(std::vector<std::string> aliasData);
     template<bool isGroup>
-    void ParseUser(std::vector<std::string> aliasData);
+    std::string ParseUser(std::vector<std::string> aliasData, unsigned line);
     void ParseDefaults(std::vector<std::string> defaultData);
     
 private:
     static Parser* mInstance;
     
     LastElement mLastParsedType;
+    DefaultsData* mLastDefaults;
     UserData* mLastUser;
     AliasData* mLastAlias;
+    std::string mMainComment;
 
 };
 

@@ -30,16 +30,18 @@ enum class DefaultsType
 
  enum class DefaultsCols
  {
-   COL_TYPE = 0,
-   COL_OWNER,
-   COL_PARAM,
-   COL_VALUE,
-   NUM_COLS
+    COL_ID = 0,
+    COL_TYPE,
+    COL_OWNER,
+    COL_PARAM,
+    COL_VALUE,
+    NUM_COLS
  };
   
 class DefaultsData {
 public:
     DefaultsData(
+        const unsigned id,
         DefaultsType type, 
         DefaultsParams param,
         std::string values,
@@ -51,17 +53,25 @@ public:
     inline void SetType(DefaultsType type) { mType = type; }
     void SetValues(std::string val) { mValues = val; }
     void SetOwner(std::string owner) { mOwner = owner; }
+    void SetParam(DefaultsParams param) { mParam = param; }
+    void SetComment(std::list<std::string> val) { mComment = val; }
+    void AppendComment(std::string val) { mComment.push_back(val); }
+    std::list<std::string> GetComment() { return mComment; }
+    std::string GetCommentAsString();
     std::string GetOwner() { return mOwner; }
     DefaultsParams GetParam() { return mParam; }
     std::string GetValuesString();
     std::string GetTypeString();
     std::string GetTypeToFile();
     
+    const unsigned mId;
+    
 private:
     DefaultsType mType;
     std::string mValues;
     std::string mOwner;
     DefaultsParams mParam;
+    std::list<std::string> mComment;
 
 };
 

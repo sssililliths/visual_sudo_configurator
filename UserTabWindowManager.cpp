@@ -22,13 +22,23 @@ void MainWindow::PrepareUserTab(GtkWidget* notebook)
     // name, location, runAs, cmds
     GtkWidget* treeViewUser  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "trvUserData"));
     GtkCellRenderer* renderer = gtk_cell_renderer_text_new ();
+    
+    gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewUser),
+                                               -1,      
+                                               "Id",  
+                                               renderer,
+                                               "text", 
+                                               UserCols::COL_ID,
+                                               NULL);    
+    
     gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewUser),
                                                -1,      
                                                "Name",  
                                                renderer,
                                                "text", 
                                                UserCols::COL_NAME,
-                                               NULL);    
+                                               NULL);   
+    
     gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewUser),
                                                -1,      
                                                "Location",  
@@ -36,6 +46,7 @@ void MainWindow::PrepareUserTab(GtkWidget* notebook)
                                                "text", 
                                                UserCols::COL_LOCATION,
                                                NULL);    
+    
     gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewUser),
                                                -1,      
                                                "Run As",  
@@ -43,6 +54,7 @@ void MainWindow::PrepareUserTab(GtkWidget* notebook)
                                                "text", 
                                                UserCols::COL_RUNAS,
                                                NULL);  
+    
     gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewUser),
                                                -1,      
                                                "Cmds",  
@@ -50,6 +62,7 @@ void MainWindow::PrepareUserTab(GtkWidget* notebook)
                                                "text", 
                                                UserCols::COL_CMDS,
                                                NULL); 
+    
     gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewUser),
                                                -1,      
                                                "Group",  
@@ -57,6 +70,7 @@ void MainWindow::PrepareUserTab(GtkWidget* notebook)
                                                "text", 
                                                UserCols::COL_IS_GROUP,
                                                NULL); 
+    
     gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeViewUser),
                                                -1,      
                                                "System group",  
@@ -66,6 +80,7 @@ void MainWindow::PrepareUserTab(GtkWidget* notebook)
                                                NULL); 
 }
 
+//------------------------------------------------------------------------------
 
 void MainWindow::PrepareUsers()
 {
@@ -73,7 +88,8 @@ void MainWindow::PrepareUsers()
     GtkTreeIter iter;
     
     GtkListStore* store = gtk_list_store_new(
-                                            6, 
+                                            7, 
+                                            G_TYPE_STRING,
                                             G_TYPE_STRING, 
                                             G_TYPE_STRING, 
                                             G_TYPE_STRING, 
@@ -90,8 +106,11 @@ void MainWindow::PrepareUsers()
         std::string cmds = elem->GetCmdsString();
         bool group = elem->IsGroup();
         bool sysGroup = elem->IsSysGroup();
+        std::stringstream ss;
+        ss << elem->mId;
         
         gtk_list_store_set (store, &iter,
+                      UserCols::COL_ID, ss.str().c_str(),
                       UserCols::COL_NAME, name.c_str(),
                       UserCols::COL_LOCATION, locations.c_str(),
                       UserCols::COL_RUNAS, runas.c_str(),
