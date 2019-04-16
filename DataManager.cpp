@@ -26,7 +26,6 @@ std::list<std::string> Split(std::string str, std::string delim)
     {
         tmp = str.substr(0, pos);
         str.erase(0, pos + delim.length());
-        if (tmp.empty()) continue;
         result.push_back(tmp);
     }
     

@@ -74,7 +74,7 @@ std::string Parser::ParseLine(std::string line, unsigned cnt)
         } 
         else if (ToLower(lineData[0]).find("defaults") == 0)
         {
-            ParseDefaults(lineData);
+            error = ParseDefaults(lineData, cnt);
             mLastParsedType = LastElement::LINE_DEFAULTS;
         }
         else if (lineData[0][0] == '#')
@@ -141,10 +141,10 @@ std::string Parser::ParseLine(std::string line, unsigned cnt)
                 ParseAlias(lineData, mLastAlias, mNextLine);
                 break;
             case LastElement::LINE_DEFAULTS:
-                ParseDefaults(lineData, mLastDefaults);
+                error = ParseDefaults(lineData, cnt, mLastDefaults);
                 break;
             case LastElement::LINE_USER:
-                ParseUser<false>(lineData, cnt, mLastUser);
+                error = ParseUser<false>(lineData, cnt, mLastUser);
                 break;
         }
     }
@@ -156,7 +156,7 @@ std::string Parser::ParseLine(std::string line, unsigned cnt)
 
 //------------------------------------------------------------------------------
 
-void Parser::ParseDefaults(std::vector<std::string> defaultData, DefaultsData* defaults)
+std::string Parser::ParseDefaults(std::vector<std::string> defaultData, unsigned line, DefaultsData* defaults)
 {
     DefaultsType type = DefaultsType::ALL_DEFAULTS;
     DefaultsSign sign = DefaultsSign::NONE;
@@ -164,6 +164,20 @@ void Parser::ParseDefaults(std::vector<std::string> defaultData, DefaultsData* d
     std::string param;
     std::string values;
     std::string owner;
+    
+    for (std::string elem : defaultData)
+    {
+        if (elem.find(",") != std::string::npos)
+        {
+            std::stringstream ss;
+            ss << "Parser error: Line "
+               << line << "\n"
+               << "Multiple params for one default entry\n"
+               << "Not implemented yet";
+            
+            return ss.str();
+        }
+    }
     
     if (!defaults)
     {
@@ -328,6 +342,8 @@ void Parser::ParseDefaults(std::vector<std::string> defaultData, DefaultsData* d
             mLastDefaults->AppendComment(tmp);
         }
     }
+    
+    return "";
 }
 
 //------------------------------------------------------------------------------

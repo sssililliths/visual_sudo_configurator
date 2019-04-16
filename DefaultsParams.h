@@ -195,7 +195,7 @@ const std::vector<std::string> g_DefaultsParamNames =
     "rootpw",
     "runaspw",
     "set_home",
-    "set_longname",
+    "set_logname",
     "set_utmp",
     "setenv",
     "shell_noargs",

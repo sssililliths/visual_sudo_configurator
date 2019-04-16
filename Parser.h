@@ -45,7 +45,7 @@ private:
     void ParseAlias(std::vector<std::string> aliasData, AliasData* alias = NULL, bool nextLine = false);
     template<bool isGroup>
     std::string ParseUser(std::vector<std::string> aliasData, unsigned line, UserData* user = NULL);
-    void ParseDefaults(std::vector<std::string> defaultData, DefaultsData* defaults = NULL);
+    std::string ParseDefaults(std::vector<std::string> defaultData, unsigned line, DefaultsData* defaults = NULL);
     
 private:
     static Parser* mInstance;

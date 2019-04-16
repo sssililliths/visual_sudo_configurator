@@ -66,7 +66,7 @@ void FileManager::LoadData()
             mFileData.clear();
         }
 
-        unsigned line = 0;
+        unsigned line = 1;
         while (!fs.eof())
         {
             getline(fs, tmp);

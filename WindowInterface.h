@@ -50,7 +50,7 @@ const std::string gMainWindow =
               <object class=\"GtkMenuItem\">\
                 <property name=\"visible\">True</property>\
                 <property name=\"can_focus\">False</property>\
-                <property name=\"label\" translatable=\"yes\">_Plik</property>\
+                <property name=\"label\" translatable=\"yes\">_File</property>\
                 <property name=\"use_underline\">True</property>\
                 <child type=\"submenu\">\
                   <object class=\"GtkMenu\">\
@@ -58,7 +58,7 @@ const std::string gMainWindow =
                     <property name=\"can_focus\">False</property>\
                     <child>\
                       <object class=\"GtkImageMenuItem\" id=\"imiOpen\">\
-                        <property name=\"label\">gtk-open</property>\
+                        <property name=\"label\">Open</property>\
                         <property name=\"visible\">True</property>\
                         <property name=\"can_focus\">False</property>\
                         <property name=\"use_underline\">True</property>\
@@ -67,7 +67,7 @@ const std::string gMainWindow =
                     </child>\
                     <child>\
                       <object class=\"GtkImageMenuItem\" id=\"imiOpenMore\">\
-                        <property name=\"label\">Otwórz kolejny</property>\
+                        <property name=\"label\">Open more</property>\
                         <property name=\"visible\">True</property>\
                         <property name=\"can_focus\">False</property>\
                         <property name=\"image\">imgLoadMore</property>\
@@ -76,7 +76,7 @@ const std::string gMainWindow =
                     </child>\
                     <child>\
                       <object class=\"GtkImageMenuItem\" id=\"imiSave\">\
-                        <property name=\"label\">gtk-save</property>\
+                        <property name=\"label\">Save</property>\
                         <property name=\"visible\">True</property>\
                         <property name=\"can_focus\">False</property>\
                         <property name=\"use_underline\">True</property>\
@@ -91,7 +91,7 @@ const std::string gMainWindow =
               <object class=\"GtkMenuItem\">\
                 <property name=\"visible\">True</property>\
                 <property name=\"can_focus\">False</property>\
-                <property name=\"label\" translatable=\"yes\">_Edycja</property>\
+                <property name=\"label\" translatable=\"yes\">_Edit</property>\
                 <property name=\"use_underline\">True</property>\
                 <child type=\"submenu\">\
                   <object class=\"GtkMenu\">\
@@ -99,7 +99,7 @@ const std::string gMainWindow =
                     <property name=\"can_focus\">False</property>\
                     <child>\
                       <object class=\"GtkImageMenuItem\" id=\"imiMainComment\">\
-                        <property name=\"label\">Główny komentarz</property>\
+                        <property name=\"label\">Main comment</property>\
                         <property name=\"visible\">True</property>\
                         <property name=\"can_focus\">False</property>\
                         <property name=\"image\">imgMainComment</property>\
@@ -108,7 +108,7 @@ const std::string gMainWindow =
                     </child>\
                     <child>\
                       <object class=\"GtkImageMenuItem\" id=\"imiDefaults\">\
-                        <property name=\"label\">gtk-dialog-info</property>\
+                        <property name=\"label\">About</property>\
                         <property name=\"visible\">True</property>\
                         <property name=\"can_focus\">False</property>\
                         <property name=\"use_underline\">True</property>\
@@ -148,11 +148,18 @@ const std::string gMainWindow =
                         <property name=\"visible\">True</property>\
                         <property name=\"can_focus\">False</property>\
                         <child>\
-                          <object class=\"GtkTreeView\" id=\"trvUserData\">\
+                          <object class=\"GtkScrolledWindow\">\
                             <property name=\"visible\">True</property>\
                             <property name=\"can_focus\">True</property>\
-                            <child internal-child=\"selection\">\
-                              <object class=\"GtkTreeSelection\"/>\
+                            <property name=\"shadow_type\">in</property>\
+                            <child>\
+                              <object class=\"GtkTreeView\" id=\"trvUserData\">\
+                                <property name=\"visible\">True</property>\
+                                <property name=\"can_focus\">True</property>\
+                                <child internal-child=\"selection\">\
+                                  <object class=\"GtkTreeSelection\"/>\
+                                </child>\
+                              </object>\
                             </child>\
                           </object>\
                           <packing>\
@@ -284,11 +291,18 @@ const std::string gMainWindow =
                         <property name=\"visible\">True</property>\
                         <property name=\"can_focus\">False</property>\
                         <child>\
-                          <object class=\"GtkTreeView\" id=\"trvDefaultsData\">\
+                          <object class=\"GtkScrolledWindow\">\
                             <property name=\"visible\">True</property>\
                             <property name=\"can_focus\">True</property>\
-                            <child internal-child=\"selection\">\
-                              <object class=\"GtkTreeSelection\"/>\
+                            <property name=\"shadow_type\">in</property>\
+                            <child>\
+                              <object class=\"GtkTreeView\" id=\"trvDefaultsData\">\
+                                <property name=\"visible\">True</property>\
+                                <property name=\"can_focus\">True</property>\
+                                <child internal-child=\"selection\">\
+                                  <object class=\"GtkTreeSelection\"/>\
+                                </child>\
+                              </object>\
                             </child>\
                           </object>\
                           <packing>\
@@ -424,11 +438,18 @@ const std::string gMainWindow =
                         <property name=\"visible\">True</property>\
                         <property name=\"can_focus\">False</property>\
                         <child>\
-                          <object class=\"GtkTreeView\" id=\"trvAliasData\">\
+                          <object class=\"GtkScrolledWindow\">\
                             <property name=\"visible\">True</property>\
                             <property name=\"can_focus\">True</property>\
-                            <child internal-child=\"selection\">\
-                              <object class=\"GtkTreeSelection\"/>\
+                            <property name=\"shadow_type\">in</property>\
+                            <child>\
+                              <object class=\"GtkTreeView\" id=\"trvAliasData\">\
+                                <property name=\"visible\">True</property>\
+                                <property name=\"can_focus\">True</property>\
+                                <child internal-child=\"selection\">\
+                                  <object class=\"GtkTreeSelection\"/>\
+                                </child>\
+                              </object>\
                             </child>\
                           </object>\
                           <packing>\

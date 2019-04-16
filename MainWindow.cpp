@@ -34,7 +34,7 @@
 #include "WindowInterface.h"
 #include "WindowInterface.h"
 
-void OnCloseWindow(gpointer user_data)
+void OnCloseWindow(GtkWidget *btn, gpointer user_data)
 {
     gtk_widget_destroy (GTK_WIDGET(user_data));
 }
@@ -50,6 +50,17 @@ void OnSaveComment(GtkWidget *btn, gpointer user_data)
         gchar* comment = gtk_text_buffer_get_text(buf, &start, &end, true);
 
         DataManager::getInstance()->SetMainComment(std::string(comment));
+        
+                GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
+                GtkWidget *dialog = gtk_message_dialog_new (
+                                    NULL,
+                                    flags,
+                                    GTK_MESSAGE_INFO,
+                                    GTK_BUTTONS_CLOSE,
+                                    "Saved");                    
+                gtk_window_set_title(GTK_WINDOW(dialog), "Message");
+                gtk_dialog_run (GTK_DIALOG (dialog));
+                gtk_widget_destroy (dialog);
 }
 
 //------------------------------------------------------------------------------
