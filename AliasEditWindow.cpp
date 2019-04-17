@@ -121,14 +121,14 @@ void OnSaveData(GtkWidget *btn, gpointer user_data)
         if(*edit)
         {
             DataManager::getInstance()->ModifyAlias(id, std::string(name), type, valueList);
+            DataManager::getInstance()->SetAliasComment(id, comment, false);;
             *edit = false;
         }
         else
         {
             DataManager::getInstance()->AddAlias(std::string(name), type, valueList, false);
-        }
-        
-        DataManager::getInstance()->SetAliasComment((*edit) ? id : DataManager::getInstance()->GetAliasId()-1, comment, false);;
+            DataManager::getInstance()->SetAliasComment(DataManager::getInstance()->GetAliasId()-1, comment, false);;
+        }        
     }
     else
     {
@@ -205,7 +205,6 @@ void OnClickBtnAddAlias(GtkWidget *btn, gpointer user_data)
     }
     
     gtk_widget_show( AliasEditWindow::getInstance()->mWindow );
-    gtk_main();
 }
 
 //------------------------------------------------------------------------------
@@ -236,7 +235,6 @@ void OnClickBtnModifyAlias(GtkWidget *btn, gpointer user_data)
             
     
     gtk_widget_show( AliasEditWindow::getInstance()->mWindow );
-    gtk_main();
 }
 
 //------------------------------------------------------------------------------

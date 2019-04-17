@@ -99,13 +99,14 @@ void OnSaveDefaultsData(GtkWidget *btn, gpointer user_data)
         if(*edit)
         {    
             DataManager::getInstance()->ModifyDefaults(id, type, owner, ptype, val, sign);
+            DataManager::getInstance()->SetDefaultsComment(id, comment, false);
             *edit = false;
         }
         else
         {
             DataManager::getInstance()->AddDefaults(type, owner, paramType, val, sign, false);
+            DataManager::getInstance()->SetDefaultsComment(DataManager::getInstance()->GetDefaultsId()-1, comment, false);
         }
-        DataManager::getInstance()->SetDefaultsComment((*edit) ? id : DataManager::getInstance()->GetDefaultsId()-1, comment, false);
     }
     else
     {
@@ -125,7 +126,6 @@ void OnClickBtnAddDefaults(GtkWidget *btn, gpointer user_data)
     }
     
     gtk_widget_show( DefaultsEditWindow::getInstance()->mWindow );
-    gtk_main();
 }
 
 
@@ -155,7 +155,6 @@ void OnClickBtnModifyDefaults(GtkWidget *btn, gpointer user_data)
         }
             
     gtk_widget_show( DefaultsEditWindow::getInstance()->mWindow );
-    gtk_main();
 }
 
 

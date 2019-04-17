@@ -268,6 +268,7 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
+    g_object_unref (mBuilder);
 }
 
 //------------------------------------------------------------------------------

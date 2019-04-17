@@ -30,9 +30,9 @@ std::list<std::string> getTreeviewData(GtkTreeModel* model);
 
 //------------------------------------------------------------------------------
 
-void OnCloseUserWindow()
+void OnCloseUserWindow(GtkWidget *btn, gpointer user_data)
 {
-    gtk_widget_destroy (UserEditWindow::getInstance()->mWindow);
+    gtk_widget_destroy (GTK_WIDGET(user_data));
     MainWindow::getInstance()->ShowData();
 }
 
@@ -86,14 +86,14 @@ void OnSaveUserData(GtkWidget *btn, gpointer user_data)
         if(*edit)
         {
             DataManager::getInstance()->ModifyUser(id, std::string(name), location, runas, valueList);
+            DataManager::getInstance()->SetUserComment(id, comment, false);
             *edit = false;
         }
         else
         {
             DataManager::getInstance()->AddUser(std::string(name), location, runas, valueList, isGroup, false);
+            DataManager::getInstance()->SetUserComment(DataManager::getInstance()->GetUserId()-1, comment, false);
         }
-        
-        DataManager::getInstance()->SetUserComment((*edit) ? id : DataManager::getInstance()->GetUserId()-1, comment, false);
     }
     else
     {
@@ -170,7 +170,6 @@ void OnClickBtnAddUser(GtkWidget *btn, gpointer user_data)
     }
     
     gtk_widget_show( UserEditWindow::getInstance()->mWindow );
-    gtk_main();
 }
 
 //------------------------------------------------------------------------------
@@ -200,7 +199,6 @@ void OnClickBtnModifyUser(GtkWidget *btn, gpointer user_data)
         }    
     
     gtk_widget_show( UserEditWindow::getInstance()->mWindow );
-    gtk_main();
 }
 
 //------------------------------------------------------------------------------
@@ -213,6 +211,7 @@ UserEditWindow::UserEditWindow() : mEdit (false)
 
 UserEditWindow::~UserEditWindow()
 {
+    g_object_unref (mBuilder);
 }
 
 //------------------------------------------------------------------------------
@@ -238,7 +237,7 @@ void UserEditWindow::ConnectEvents()
     GtkWidget* btnRemove  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "btnRemove"));
     GtkWidget* trvCmds  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "trvCmds"));
     
-    g_signal_connect (mWindow, "destroy", G_CALLBACK (OnCloseUserWindow), NULL);    
+    g_signal_connect (mWindow, "destroy", G_CALLBACK (OnCloseUserWindow), mWindow);    
     g_signal_connect (btnCancel, "clicked", G_CALLBACK (OnCloseUserWindow), NULL);
     g_signal_connect (btnAdd, "clicked", G_CALLBACK (OnAddUserCmd), NULL);
     g_signal_connect (btnRemove, "clicked", G_CALLBACK (OnRemoveUserCmd), NULL);
