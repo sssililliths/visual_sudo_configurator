@@ -421,8 +421,21 @@ std::string Parser::ParseUser(std::vector<std::string> userData, unsigned line, 
             else // group where=(as) cmd or group where=cmd
             {
                 std::vector<std::string> tmp = Split(userData[currentElement], "=");
-                location = tmp[0];
+                if(tmp.size() < 2)
+                {
+                    std::stringstream ss;
 
+                    ss << "Parsing error: Line " 
+                       << line 
+                       << ":\n" 
+                       << "not enough elements"
+                       << ":\n" 
+                       << userData[currentElement];
+                    return ss.str();
+                }
+                
+                location = tmp[0];
+                
                 if(tmp[1].find("(") != std::string::npos) // next we have runas
                 {
                     runAs = tmp[1].substr(1, tmp[1].size() - 2);
@@ -470,13 +483,17 @@ std::string Parser::ParseUser(std::vector<std::string> userData, unsigned line, 
             cmds.push_back(tmp.substr(0, tmp.length()-1));
             tmp = "";
         }
+        else
+        {
+            tmp += " ";
+        }
+        
         if (tmp[0] == '#')
         {
             hasComment = true;
             currentElement = i;
             break;
         }
-        tmp += " ";
     }
     cmds.push_back(tmp);
     

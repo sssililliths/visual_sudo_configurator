@@ -81,7 +81,7 @@ void OnSaveUserData(GtkWidget *btn, gpointer user_data)
     
     bool* edit = static_cast<bool*>(user_data);
     
-    if (id && !valueList.empty())
+    if (id && strcmp(location, "") != 0 && !valueList.empty())
     {
         if(*edit)
         {
@@ -238,7 +238,7 @@ void UserEditWindow::ConnectEvents()
     GtkWidget* trvCmds  = GTK_WIDGET(gtk_builder_get_object(mBuilder, "trvCmds"));
     
     g_signal_connect (mWindow, "destroy", G_CALLBACK (OnCloseUserWindow), mWindow);    
-    g_signal_connect (btnCancel, "clicked", G_CALLBACK (OnCloseUserWindow), NULL);
+    g_signal_connect (btnCancel, "clicked", G_CALLBACK (OnCloseUserWindow), mWindow);
     g_signal_connect (btnAdd, "clicked", G_CALLBACK (OnAddUserCmd), NULL);
     g_signal_connect (btnRemove, "clicked", G_CALLBACK (OnRemoveUserCmd), NULL);
     g_signal_connect (btnSave, "clicked", G_CALLBACK (OnSaveUserData), &mEdit);
