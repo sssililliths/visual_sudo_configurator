@@ -144,8 +144,8 @@ void OnClickOpenMenuItem (GtkMenuItem *menuitem, gpointer user_data)
         }
         
         gtk_widget_destroy (dialog);
-        delete DataManager::getInstance();
     }
+    delete DataManager::getInstance();
     
     OnClickOpenMoreMenuItem (menuitem, user_data);
 }
