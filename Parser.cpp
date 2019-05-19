@@ -38,7 +38,8 @@ Parser::Parser() :
     mLastAlias(NULL),
     mMainComment(""),
     mContinue(false),
-    mNextLine(false)
+    mNextLine(false),
+    mLastParsedType(LastElement::LINE_EMPTY)
 {}
 
 //------------------------------------------------------------------------------

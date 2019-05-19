@@ -11,6 +11,7 @@
  */
 
 #include <gtk/gtk.h>
+#include <glib-2.0/gobject/gobject.h>
 #include "DefaultsEditWindow.h"
 #include "MainWindow.h"
 #include "WindowInterface.h"
@@ -115,6 +116,11 @@ void OnSaveDefaultsData(GtkWidget *btn, gpointer user_data)
     
     gtk_widget_destroy (DefaultsEditWindow::getInstance()->mWindow);
     MainWindow::getInstance()->ShowData();
+    
+    g_free(activeType);
+    g_free(const_cast<gchar*>(comment));
+    g_free(activeSign);
+    g_free(paramType);
 }
 
 
@@ -150,6 +156,7 @@ void OnClickBtnModifyDefaults(GtkWidget *btn, gpointer user_data)
 
             ssid << data;
             ssid >> id;
+            g_free(data);
             DefaultsEditWindow::getInstance()->PrepareEditWindow(); 
             DefaultsEditWindow::getInstance()->SetValues(id);
         }
@@ -164,6 +171,7 @@ DefaultsEditWindow::DefaultsEditWindow() : mEdit (false)
 
 DefaultsEditWindow::~DefaultsEditWindow()
 {
+    g_object_unref(mBuilder);
 }
 
 DefaultsEditWindow* DefaultsEditWindow::getInstance()

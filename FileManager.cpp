@@ -54,7 +54,11 @@ void FileManager::LoadData()
     if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK)
     {        
         GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
-        fs.open (gtk_file_chooser_get_filename (chooser), std::fstream::in);
+        gchar * filename = gtk_file_chooser_get_filename (chooser);
+        fs.open (filename, std::fstream::in);
+        
+        if (filename)
+            g_free (filename);
     }
     gtk_widget_destroy (dialog);
         
@@ -102,7 +106,7 @@ void FileManager::LoadData()
         gtk_dialog_run (GTK_DIALOG (errorDialog));
         gtk_widget_destroy (errorDialog);
     }
-    
+        
     if (!error.empty())
     {
         delete DataManager::getInstance();
@@ -128,8 +132,8 @@ void FileManager::SaveData()
     {        
         GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
         std::fstream fs;
-
-        fs.open (gtk_file_chooser_get_filename (chooser), std::fstream::out);
+        gchar* filename = gtk_file_chooser_get_filename (chooser);
+        fs.open (filename, std::fstream::out);
         if (fs.good())
         {
             fs << Parser::getInstance()->PrepareToSave();
@@ -140,6 +144,9 @@ void FileManager::SaveData()
         {
             //todo: error opening file
         }
+        
+        if (filename)
+            g_free (filename);
     }
     gtk_widget_destroy (dialog);
 }

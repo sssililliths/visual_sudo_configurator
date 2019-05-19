@@ -102,6 +102,9 @@ void OnSaveUserData(GtkWidget *btn, gpointer user_data)
     
     gtk_widget_destroy (UserEditWindow::getInstance()->mWindow);
     MainWindow::getInstance()->ShowData();
+    
+    valueList.clear();
+    g_free(const_cast<gchar*>(comment));
 }
 
 //------------------------------------------------------------------------------
@@ -193,12 +196,15 @@ void OnClickBtnModifyUser(GtkWidget *btn, gpointer user_data)
             std::stringstream ss;
             ss << data;
             ss >> result;
-            
+            g_free(data);
             UserEditWindow::getInstance()->PrepareEditWindow(); 
             UserEditWindow::getInstance()->SetValues(result);
+            
         }    
     
     gtk_widget_show( UserEditWindow::getInstance()->mWindow );
+    g_object_unref(selection);
+    g_object_unref(model);            
 }
 
 //------------------------------------------------------------------------------

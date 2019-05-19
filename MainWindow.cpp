@@ -61,6 +61,8 @@ void OnSaveComment(GtkWidget *btn, gpointer user_data)
                 gtk_window_set_title(GTK_WINDOW(dialog), "Message");
                 gtk_dialog_run (GTK_DIALOG (dialog));
                 gtk_widget_destroy (dialog);
+                
+    g_free(comment);
 }
 
 //------------------------------------------------------------------------------
@@ -207,6 +209,9 @@ void OnClickBtnRemoveDefaults(GtkWidget *btn, gpointer user_data)
         DataManager::getInstance()->RemoveDefaults(id);
         MainWindow::getInstance()->ShowData();
     }
+    
+    delete selection;
+    delete model;
 }
 
 //------------------------------------------------------------------------------

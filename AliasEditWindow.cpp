@@ -58,7 +58,7 @@ std::list<std::string> getTreeviewData(GtkTreeModel* model)
         std::stringstream ss;
         ss << data;
         result.push_back(ss.str());
-        
+        g_free(data);
         valid = gtk_tree_model_iter_next (model,  &iter);
     }
     
@@ -137,6 +137,10 @@ void OnSaveData(GtkWidget *btn, gpointer user_data)
     
     gtk_widget_destroy (AliasEditWindow::getInstance()->mWindow);
     MainWindow::getInstance()->ShowData();
+    
+    g_free(activeType);
+    g_free(const_cast<gchar*>(comment));
+    valueList.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -247,6 +251,7 @@ AliasEditWindow::AliasEditWindow() : mEdit (false)
 
 AliasEditWindow::~AliasEditWindow()
 {
+    g_object_unref(mBuilder);
 }
 
 //------------------------------------------------------------------------------

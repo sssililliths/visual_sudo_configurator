@@ -15,6 +15,7 @@
 
 #include <string>
 #include <list>
+#include <memory>
 #include "DefaultsParams.h"
 
 enum class DefaultsType

@@ -16,6 +16,7 @@
 #include <string>
 #include <list>
 #include <sstream>
+#include <memory>
 
 
  enum class UserCols
