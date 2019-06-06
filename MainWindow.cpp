@@ -210,8 +210,6 @@ void OnClickBtnRemoveDefaults(GtkWidget *btn, gpointer user_data)
         MainWindow::getInstance()->ShowData();
     }
     
-    delete selection;
-    delete model;
 }
 
 //------------------------------------------------------------------------------
