@@ -10,6 +10,7 @@
  * 
  */
 
+#include <iterator>
 #include "DataManager.h"
 #include "DefaultsParams.h"
 
@@ -455,3 +456,33 @@ void DataManager::SetMainComment(std::string val)
         }
     }
     
+    
+template <typename T>
+T GetElementById(std::list<T> l, unsigned id)
+{
+    typename std::list<T>::iterator it = std::next(l.begin(), id-1);
+    
+    do
+    {
+        unsigned currElemId = *it->mId;
+        
+        if (currElemId == id)
+            return *it;
+        
+        if ((currElemId > id && it == l.begin()) ||
+            (currElemId < id && it == l.end()))
+            return NULL;
+        
+        unsigned prevElemId = *(it-1)->mId;
+        unsigned nextElemId = *(it+1)->mId;
+        
+        if ((currElemId > id && prevElemId < id) ||
+            (currElemId < id && nextElemId > id))
+           return NULL; 
+        
+        if (currElemId < id) it++;
+        else it--;
+    }
+    while(true);
+    
+}
